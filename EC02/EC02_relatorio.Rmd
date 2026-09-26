@@ -56,8 +56,9 @@ $`r round(mean(.r[, 1] - .r[, 3]), 2)`$ p.p. ao mês a favor da A1
 $[`r round(.tD$conf.int[1], 2)`; `r round(.tD$conf.int[2], 2)`]$), sem
 diferença detectável de volatilidade, e o teste de equivalência (TOST) com
 margem $\delta^* = 0.5$ p.p. foi inconclusivo quanto à equivalência. A1
-apresentou a maior estimativa pontual de retorno, mas a potência do experimento
-para detectar $\delta^*$ nas comparações entre pares é limitada. Assim, os dados sustentam A1 e A3 como candidatas ao maior
+apresentou a maior estimativa pontual de retorno, mas a potência das
+comparações múltiplas para detectar um efeito normalizado $d^* = 0.5$ é
+limitada. Assim, os dados sustentam A1 e A3 como candidatas ao maior
 retorno médio, mas não fornecem evidência estatística suficiente para
 separá-las com segurança.
 
@@ -123,9 +124,11 @@ $$\begin{cases} H_0: \mu_i = \mu_k\\ H_1: \mu_i \neq \mu_k\end{cases}
 
 O método de Dunnett seria apropriado se uma ação de referência tivesse sido
 definida antes da coleta. Como não há uma ação-controle definida a priori,
-o método de Tukey permite comparar todos os pares mantendo o nível global de
-significância. As ações que não diferirem significativamente da ação de maior
-média amostral formam o grupo de candidatas ao maior retorno.
+escolhê-la após observar as médias caracterizaria uma hipótese formulada
+*post hoc* [5]; o método de Tukey permite comparar todos os pares mantendo
+o nível global de significância. As ações que não diferirem
+significativamente da ação de maior média amostral formam o grupo de
+candidatas ao maior retorno.
 
 **Evidências complementares:** se mais de uma ação se destacar, conforme
 solicitado no enunciado, as duas primeiras colocadas serão comparadas
@@ -143,24 +146,37 @@ como prova de superioridade.
 O nível de significância adotado é $\alpha = 0.05$ em todas as etapas, e a
 potência desejada é $1 - \beta = 0.8$.
 
-### Tamanho de efeito mínimo relevante ($\delta^*$)
+### Tamanho de efeito mínimo relevante ($\delta^*$ e $d^*$)
 
-Não há um valor consensual de diferença de retorno mensal a partir da qual
-uma ação deva ser preferida a outra, pois esse limiar depende do perfil do
-investidor, dos custos de transação e dos impostos. Definiu-se
-$\delta^* = 0.5$ ponto percentual ao mês, o que, para ações com retorno
-próximo de 2\% ao mês, corresponde a uma diferença de
-$\approx `r round(100 * (1.02^12 - 1.015^12), 1)`$ p.p. no retorno anual
-composto, diferença que altera de forma
-perceptível o resultado de uma aplicação ao longo de um ano. Diferenças
-menores que essa foram consideradas pouco relevantes para a decisão, pois
-tendem a ser absorvidas pelos custos de transação e impostos desconsiderados
-nas simplificações do problema. Ressalva-se que esse valor é uma escolha da
-equipe, usada para ancorar a análise de potência e o teste de equivalência,
-e não um valor extraído da literatura.
+Não há na literatura de finanças um valor consensual de diferença de retorno
+mensal a partir da qual uma ação deva ser preferida a outra, pois esse limiar
+depende do perfil do investidor, dos custos de transação e dos impostos. Os
+parâmetros de efeito mínimo relevante foram, portanto, definidos a priori,
+com base apenas em informações externas aos dados analisados.
+
+Na escala dos retornos, adotou-se $\delta^* = 0.5$ ponto percentual ao mês
+($\approx 6.2\%$ ao ano em regime composto). O valor é compatível com a ordem
+de grandeza dos custos de execução estimados para estratégias de negociação
+em ações, de 20 a 57 pontos-base [11]: diferenças de retorno menores que
+$\delta^*$ tenderiam a ser consumidas por custos de transação e impostos,
+desconsiderados nas simplificações do problema. Esse valor é utilizado como
+margem do teste de equivalência.
+
+Para o cálculo da potência, seria necessária uma estimativa do desvio-padrão
+dos retornos obtida independentemente dos dados analisados (por exemplo, de
+um estudo piloto ou de dados históricos), que não está disponível. Adotou-se,
+por isso, o tamanho de efeito mínimo relevante normalizado,
+$d^* = \delta^*/\sigma = 0.5$, que corresponde ao efeito de magnitude "média"
+da convenção de Cohen [9, 10]. Nessa formulação, a potência depende apenas de
+$d^*$, $n$ e $\alpha$, e não de uma estimativa de $\sigma$. Ressalva-se que as
+convenções de Cohen são genéricas e não específicas para retornos
+financeiros, de modo que ambos os valores devem ser entendidos como
+referências para ancorar a análise, e não como limiares de decisão
+estabelecidos.
 
 ```{r delta, echo=TRUE}
-delta_star <- 0.5  # delta* adotado, em p.p. ao mês
+delta_star <- 0.5  # delta*: margem de equivalência, em p.p. ao mês
+d_star     <- 0.5  # d*: efeito mínimo relevante normalizado (Cohen)
 ```
 
 ### Descrição da coleta e consolidação dos dados
@@ -283,7 +299,6 @@ kruskal.test(Ret ~ Acao, data = df)
 
 ```{r pglobal, echo=FALSE}
 tab <- summary(modelo)[[1]]
-QMR <- tab["Residuals", "Mean Sq"]
 ```
 
 A hipótese nula de que todas as ações têm o mesmo retorno médio é rejeitada
@@ -360,9 +375,9 @@ gráfico de resíduos por valores ajustados mostra dispersões semelhantes nos
 cinco níveis. O $p$-valor não é muito distante de $\alpha$, mas as razões
 entre os desvios-padrão das ações são pequenas (no máximo
 $\approx `r round(max(resumo$DP) / min(resumo$DP), 2)`$), e o delineamento
-balanceado torna a ANOVA robusta a diferenças dessa magnitude. A premissa é consistente com os dados e justifica o uso de uma
-variância comum $\sigma^2$, estimada pelo $QM_{Res}$, na ANOVA, nas
-comparações de Tukey e no cálculo de potência.
+balanceado torna a ANOVA robusta a diferenças dessa magnitude. A premissa é
+consistente com os dados e justifica o uso de uma variância comum
+$\sigma^2$, estimada pelo $QM_{Res}$, na ANOVA e nas comparações de Tukey.
 
 **Independência.** É a premissa mais delicada, pois os dados são séries
 temporais, e retornos de meses consecutivos poderiam estar correlacionados
@@ -445,7 +460,19 @@ pareadas não apresentam desvio relevante da normalidade (Shapiro-Wilk,
 $p = `r round(shapiro.test(d)$p.value, 3)`$), premissa do teste $t$ pareado
 e do TOST.
 
-**(ii) Equivalência.** A não rejeição em (i) não permite afirmar que as ações são equivalentes, e por isso foi realizado o TOST. O teste inferior rejeita sua hipótese nula ($p = `r signif(p_inf, 2)`$), fornecendo evidência de que a diferença média não é menor ou igual a $-\delta^*$. Já o teste superior não rejeita sua hipótese nula ($p = `r round(p_sup, 3)`$). De forma equivalente, o IC de 90% ($[`r round(ic90[1], 2)`; `r round(ic90[2], 2)`]$) não está contido em $[-\delta^*; \delta^*]$. Portanto, os dados sustentam não-inferioridade de `r melhor` em relação a `r segunda` para a margem de 0,5 p.p., mas **não sustentam equivalência** entre as duas ações. Como o intervalo ainda inclui diferenças positivas de até aproximadamente $`r round(ic90[2], 1)`$ p.p. ao mês, não é possível determinar, com este experimento, se a diferença real é pequena ou se `r melhor` apresenta alguma vantagem dentro dessa margem.
+**(ii) Equivalência.** A não rejeição em (i) não permite afirmar que as
+ações são equivalentes, e por isso foi realizado o TOST. O teste inferior
+rejeita sua hipótese nula ($p = `r signif(p_inf, 2)`$), fornecendo evidência
+de que a diferença média não é menor ou igual a $-\delta^*$. Já o teste
+superior não rejeita sua hipótese nula ($p = `r round(p_sup, 3)`$). De forma
+equivalente, o IC de 90% ($[`r round(ic90[1], 2)`; `r round(ic90[2], 2)`]$)
+não está contido em $[-\delta^*; \delta^*]$. Portanto, os dados sustentam
+não-inferioridade de `r melhor` em relação a `r segunda` para a margem de
+0.5 p.p., mas **não sustentam equivalência** entre as duas ações. Como o
+intervalo ainda inclui diferenças positivas de até aproximadamente
+$`r round(ic90[2], 1)`$ p.p. ao mês, não é possível determinar, com este
+experimento, se a diferença real é pequena ou se `r melhor` apresenta alguma
+vantagem dentro dessa margem.
 
 **(iii) Risco.** Como o investidor aplica todo o capital em uma única ação,
 a volatilidade também é relevante para a decisão. O teste de
@@ -460,68 +487,73 @@ esse critério também não as distingue.
 
 ### Potência do teste
 
-A potência foi calculada para o $\delta^*$ definido a priori, e não a partir
-do efeito observado, pois a avaliação a posteriori da probabilidade do erro
-tipo II é uma abordagem inadequada [8]. O desvio-padrão comum foi estimado
-pela raiz do quadrado médio do resíduo da ANOVA,
-$\hat\sigma = \sqrt{QM_{Res}} = `r round(sqrt(QMR), 3)`$ p.p.
+A potência foi calculada a priori para o efeito normalizado $d^*$ definido
+no Desenho experimental, e não a partir do efeito observado ou de uma
+estimativa de $\sigma$ obtida dos mesmos dados, pois a avaliação a
+posteriori da probabilidade do erro tipo II é uma abordagem inadequada
+[1, 8]. Na escala normalizada, os cálculos são feitos com desvio-padrão
+unitário e diferença igual a $d^*$.
 
-Foram realizados três cálculos [3]. O primeiro refere-se à ANOVA, considerando
-o cenário conservador em que apenas duas ações diferem por $\delta^*$,
-com desvios simétricos em relação à média global e as demais sem efeito,
-$\tau = \{-\delta^*/2, \delta^*/2, 0, 0, 0\}$. O segundo refere-se às
+Foram realizados três cálculos [3]. O primeiro refere-se à ANOVA,
+considerando o cenário conservador em que apenas duas ações diferem por
+$d^*$, com desvios simétricos em relação à média global e as demais sem
+efeito, $\tau = \{-d^*/2, d^*/2, 0, 0, 0\}$. O segundo refere-se às
 comparações entre pares, usando a correção de Bonferroni
 ($\alpha_{aj} = \alpha/K$, com $K = 10$) e a fórmula do teste $t$ de duas
 amostras. Como a correção de Bonferroni é mais conservadora que o método de
 Tukey, esse cálculo fornece uma referência conservadora para a potência das
 comparações. O terceiro refere-se à comparação direta entre as duas ações de
-destaque pelo teste $t$ pareado ($\alpha = 0.05$), usando o desvio-padrão
-amostral das diferenças pareadas.
+destaque pelo teste $t$ pareado ($\alpha = 0.05$), com $d^*$ expresso em
+unidades do desvio-padrão das diferenças pareadas.
 
 ```{r power, echo=TRUE}
-sigma <- sqrt(QMR)
-tau   <- c(-delta_star/2, delta_star/2, 0, 0, 0)
-K     <- 10
+tau <- c(-d_star/2, d_star/2, 0, 0, 0)
+K   <- 10
 
 # ANOVA
 potA  <- power.anova.test(groups = 5, n = n, between.var = var(tau),
-                          within.var = sigma^2, sig.level = 0.05)
+                          within.var = 1, sig.level = 0.05)
 npotA <- power.anova.test(groups = 5, between.var = var(tau),
-                          within.var = sigma^2, sig.level = 0.05, power = 0.80)
+                          within.var = 1, sig.level = 0.05, power = 0.80)
 
 # Comparações entre pares (Bonferroni)
-potC  <- power.t.test(n = n, delta = delta_star, sd = sigma,
+potC  <- power.t.test(n = n, delta = d_star, sd = 1,
                       sig.level = 0.05 / K, type = "two.sample")
-npotC <- power.t.test(delta = delta_star, sd = sigma, sig.level = 0.05 / K,
+npotC <- power.t.test(delta = d_star, sd = 1, sig.level = 0.05 / K,
                       power = 0.80, type = "two.sample")
 
 # Comparação direta entre as duas ações de destaque (t pareado)
-potP  <- power.t.test(n = n, delta = delta_star, sd = sd(d),
+potP  <- power.t.test(n = n, delta = d_star, sd = 1,
                       sig.level = 0.05, type = "paired")
-npotP <- power.t.test(delta = delta_star, sd = sd(d),
+npotP <- power.t.test(delta = d_star, sd = 1,
                       sig.level = 0.05, power = 0.80, type = "paired")
 
 potA; npotA; potC; npotC; potP; npotP
 ```
 
-Com $n = `r n`$ meses, a potência da ANOVA para detectar uma diferença de
-$\delta^* = `r delta_star`$ p.p. entre duas ações é de apenas
+Com $n = `r n`$ meses, a potência da ANOVA para detectar um efeito
+normalizado $d^* = `r d_star`$ entre duas ações é de apenas
 $`r round(potA$power * 100, 1)`\%$, e seriam necessários
-`r ceiling(npotA$n)` meses por ação para atingir 80%. Nas comparações entre
-pares, a potência é de $\approx `r round(potC$power * 100, 1)`\%$, e seriam
-necessários cerca de `r ceiling(npotC$n)` meses. A comparação direta
-entre `r melhor` e `r segunda` pelo teste $t$ pareado
-($\hat\sigma_D = `r round(sd(d), 3)`$ p.p.) tem potência de
-$`r round(potP$power * 100, 1)`\%$ para $\delta^*$, abaixo dos 80\%
-desejados, que exigiriam `r ceiling(npotP$n)` meses. Como a diferença
-observada ($`r round(mean(d), 2)`$ p.p.) é ainda menor que $\delta^*$, a
-não rejeição de
-$\mu_{`r melhor`} = \mu_{`r segunda`}$ reflete essa limitação e não é
-evidência de igualdade, o que é coerente com o resultado inconclusivo do
-TOST.
+`r ceiling(npotA$n)` meses por ação para atingir 80%. Nas comparações
+múltiplas entre pares, a potência é de
+$\approx `r round(potC$power * 100, 1)`\%$, e seriam necessários cerca de
+`r ceiling(npotC$n)` meses. A não rejeição de
+$\mu_{`r melhor`} = \mu_{`r segunda`}$ pelo método de Tukey reflete, em
+parte, essa baixa sensibilidade, e não é evidência de igualdade.
+
+A comparação direta pelo teste $t$ pareado é mais sensível, por envolver
+um único teste ao nível $\alpha = 0.05$: sua potência para $d^*$ é de
+$`r round(potP$power * 100, 1)`\%$ (seriam necessários `r ceiling(npotP$n)`
+meses para 80%). Assim, se a diferença real entre `r melhor` e `r segunda`
+fosse de magnitude média, o teste pareado teria alta probabilidade de
+detectá-la. A não rejeição nesse teste, com tamanho de efeito observado
+pequeno ($d = `r round(dD, 2)`$), indica que uma eventual vantagem da
+`r melhor` tende a ser menor que um efeito de magnitude média, o que é
+coerente com o resultado do TOST: há evidência de não-inferioridade, mas
+não de equivalência nem de superioridade.
 
 Em contraste, as diferenças entre as duas ações de destaque e as demais
-(aproximadamente 1,5 a 2,6 p.p.) são três a cinco vezes maiores que
+(aproximadamente 1.5 a 2.6 p.p.) são três a cinco vezes maiores que
 $\delta^*$. Essas diferenças foram identificadas pelas comparações múltiplas
 de Tukey, que rejeitaram as respectivas hipóteses de igualdade. Assim, os
 dados fornecem evidência consistente para separar A1 e A3 do grupo formado
@@ -558,17 +590,20 @@ por A2, A4 e A5.
   `r melhor`, valor maior que a diferença média observada entre as duas.
 - **Recomendações para melhorar o experimento:** (i) aumentar o número de
   meses observados para cerca de `r ceiling(npotC$n)`, caso se deseje 80% de
-  potência nas comparações entre pares para $\delta^*$; séries mais longas,
-  contudo, tornam mais forte a hipótese de estabilidade dos retornos no
-  tempo, e os dois objetivos precisam ser equilibrados; (ii) definir a
-  priori, junto com o investidor, a margem $\delta^*$ e um critério de
+  potência nas comparações múltiplas entre pares para $d^*$; séries mais
+  longas, contudo, tornam mais forte a hipótese de estabilidade dos retornos
+  no tempo, e os dois objetivos precisam ser equilibrados; (ii) obter, antes
+  da análise, uma estimativa independente do desvio-padrão dos retornos (por
+  exemplo, de dados históricos anteriores ao período analisado), que permita
+  planejar o experimento diretamente na escala de $\delta^*$; (iii) definir
+  a priori, junto com o investidor, a margem $\delta^*$ e um critério de
   decisão que combine retorno e risco, em vez de usar o risco apenas como
-  critério de desempate; (iii) utilizar preços ajustados por dividendos e
+  critério de desempate; (iv) utilizar preços ajustados por dividendos e
   desdobramentos e descontar custos de transação e impostos, que podem ser
-  da mesma ordem da diferença entre as duas melhores ações; (iv) validar a
+  da mesma ordem da diferença entre as duas melhores ações; (v) validar a
   recomendação fora da amostra, por exemplo escolhendo a ação com os meses
   $1, \dots, t$ e verificando seu retorno no mês $t+1$, o que testa
-  diretamente a pergunta sobre o *próximo* mês; (v) caso uma série mais
+  diretamente a pergunta sobre o *próximo* mês; (vi) caso uma série mais
   longa revele correlação entre as ações num mesmo mês, tratar o mês como
   bloco para remover essa fonte de variabilidade.
 
@@ -597,6 +632,16 @@ Parametric Models. Biom J. 2008;50(3):346-363.
 
 [8] Hoenig JM, Heisey DM. The Abuse of Power: The Pervasive Fallacy of
 Power Calculations for Data Analysis. Am Stat. 2001;55(1):19-24.
+
+[9] Cohen J. Statistical Power Analysis for the Behavioral Sciences. 2nd ed.
+Hillsdale: Lawrence Erlbaum Associates; 1988.
+
+[10] Ellis PD. The Essential Guide to Effect Sizes. Cambridge: Cambridge
+University Press; 2010.
+
+[11] Novy-Marx R, Velikov M. A Taxonomy of Anomalies and Their Trading
+Costs. Rev Financ Stud. 2016;29(1):104-147.
+https://doi.org/10.1093/rfs/hhv063
 
 ### Papéis da equipe
 
