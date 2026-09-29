@@ -89,7 +89,7 @@ fator de interesse é o tipo de ação, com cinco níveis.
 ### Descrição do problema
 
 O objetivo é identificar a ação com maior retorno mensal médio dentre cinco
-candidatas, usando os retornos dos últimos 35 meses como amostra do
+candidatas, usando os retornos ao longo dos 36 meses como amostra do
 comportamento mensal de cada ação. Para cada ação $i$ e mês $j$, a variável
 de resposta é o retorno mensal simples, em %:
 
@@ -106,7 +106,7 @@ Por esse mesmo motivo, os preços em si não são comparáveis entre ações e n
 foram utilizados como variável de resposta.
 
 A média foi adotada como parâmetro de interesse porque o investidor busca o
-maior ganho mensal *esperado*. Os retornos das cinco ações foram modelados
+maior ganho mensal esperado. Os retornos das cinco ações foram modelados
 por um modelo de efeitos fixos de um fator (**Ação**, com $a = 5$ níveis e
 $n = 35$ observações por nível):
 
@@ -136,7 +136,7 @@ médios das ações:
 $$\begin{cases} H_0: \tau_i = 0, \ \forall i \in \{1, \dots, 5\}\\ H_1: \exists\, \tau_i \neq 0\end{cases}$$
 
 **Etapa 2 (comparações múltiplas):** caso $H_0$ seja rejeitada, é preciso
-identificar *quais* ações diferem. Como não há uma ação de referência
+identificar quais ações diferem. Como não há uma ação de referência
 definida a priori (nenhuma das cinco é um "controle"), foram planejadas
 comparações de todos contra todos pelo método de Tukey [2, 6], com
 $K = a(a-1)/2 = 10$ pares:
@@ -147,7 +147,7 @@ $$\begin{cases} H_0: \mu_i = \mu_k\\ H_1: \mu_i \neq \mu_k\end{cases}
 O método de Dunnett seria apropriado se uma ação de referência tivesse sido
 definida antes da coleta. Como não há uma ação-controle definida a priori,
 escolhê-la após observar as médias caracterizaria uma hipótese formulada
-*post hoc* [5]; o método de Tukey permite comparar todos os pares mantendo
+*post hoc* [5]. O método de Tukey permite comparar todos os pares mantendo
 o nível global de significância. As ações que não diferirem
 significativamente da ação de maior média amostral formam o grupo de
 candidatas ao maior retorno.
@@ -164,7 +164,7 @@ são escolhidas por terem as maiores médias amostrais, de modo que a
 diferença observada entre elas tende a estar superestimada; os resultados
 dessa etapa são, por isso, tratados como evidência complementar, e não
 como prova de superioridade. O teste $t$ pareado é bilateral, uma vez que a
-direção da diferença entre as duas ações não foi fixada a priori.
+direção da diferença entre as duas ações não foi fixada *a priori*.
 
 O nível de significância adotado é $\alpha = 0.05$ em todas as etapas, e a
 potência desejada é $1 - \beta = 0.8$.
@@ -213,7 +213,7 @@ d_star     <- 0.5  # d*: efeito mínimo relevante normalizado (Cohen)
 
 O arquivo `DadosAcoesGrupoA.csv` contém 36 linhas e 5 colunas, sem
 cabeçalho, com os preços de fechamento mensais de cada ação (colunas),
-ordenados **do mês mais recente para o mais antigo** (linha 1 = mês anterior
+ordenados do mês mais recente para o mais antigo (linha 1 = mês anterior
 ao atual). As colunas foram nomeadas A1 a A5, na ordem em que aparecem no
 arquivo.
 
@@ -223,7 +223,7 @@ Sem essa inversão, os retornos seriam calculados no sentido oposto e uma
 ação em alta pareceria estar em queda. Com 36 preços obtêm-se $n = 35$
 retornos por ação. O número de meses não foi escolhido pela equipe, e sim
 fixado pelo enunciado, de modo que não houve cálculo de tamanho amostral para
-dimensionar a coleta; a análise de potência apresentada adiante avalia a
+dimensionar a coleta. A análise de potência apresentada adiante avalia a
 sensibilidade do estudo para as diferenças de interesse.
 
 **Suposições explícitas:** (i) conforme o enunciado, o preço de abertura de
@@ -413,8 +413,7 @@ kruskal.test(Ret ~ Acao, data = df)
 
 A hipótese nula de que todas as ações têm o mesmo retorno médio é rejeitada
 ($F = `r round(ss[1, "F value"], 2)`$, $p < 0.001$), conclusão corroborada
-pelo teste de Kruskal-Wallis, que não depende da premissa de normalidade
-(embora teste diferenças de distribuição, e não especificamente de médias). Há,
+pelo teste de Kruskal-Wallis, que não depende da premissa de normalidade, embora teste diferenças de distribuição, e não especificamente de médias. Há,
 portanto, ao menos uma ação com retorno médio diferente das demais. A
 fração da variabilidade total dos retornos que o fator ação explica é de
 $\eta^2 = `r round(eta2, 3)`$ ($\omega^2 = `r round(omega2, 3)`$), valor que
