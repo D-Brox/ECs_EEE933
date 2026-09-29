@@ -528,7 +528,7 @@ superior não rejeita sua hipótese nula ($p = `r round(p_sup, 3)`$). De forma
 equivalente, o IC de 90% ($[`r round(ic90[1], 2)`; `r round(ic90[2], 2)`]$)
 não está contido em $[-\delta^*; \delta^*]$. Portanto, os dados sustentam
 não-inferioridade de `r melhor` em relação a `r segunda` para a margem de
-0.5 p.p., mas **não sustentam equivalência** entre as duas ações. Esse
+0.5 p.p., mas *não sustentam equivalência* entre as duas ações. Esse
 resultado precisa ser lido junto com a potência do TOST, calculada acima: com
 `r n` meses, a probabilidade de declarar equivalência seria de apenas
 `r round(100 * pot_tost_zero, 1)`\% mesmo que a diferença verdadeira fosse nula,
@@ -554,10 +554,10 @@ esse critério também não as distingue.
 
 ### Potência do teste
 
-A potência foi calculada a priori para o efeito normalizado $d^*$ definido
+A potência foi calculada *a priori* para o efeito normalizado $d^*$ definido
 no Desenho experimental, e não a partir do efeito observado ou de uma
-estimativa de $\sigma$ obtida dos mesmos dados, pois a avaliação a
-posteriori da probabilidade do erro tipo II é uma abordagem inadequada
+estimativa de $\sigma$ obtida dos mesmos dados, pois a avaliação *a
+posteriori* da probabilidade do erro tipo II é uma abordagem inadequada
 [1, 8]. Na escala normalizada, os cálculos são feitos com desvio-padrão
 unitário e diferença igual a $d^*$.
 
