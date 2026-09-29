@@ -120,11 +120,10 @@ investidor, e as conclusões valem apenas para elas.
 
 Como os cinco retornos de um mesmo mês são observados sob as mesmas
 condições de mercado, uma alternativa seria tratar o mês como bloco, de modo
-análogo ao pareamento na comparação de duas amostras. O pareamento, porém, só
-é vantajoso quando há correlação relevante entre as observações de um mesmo
+análogo ao pareamento na comparação de duas amostras. O pareamento, porém, é indicado em casos onde há uma grande correlação entre as observações de um mesmo
 bloco. Essa correlação foi avaliada na Análise Exploratória e, por ser
 praticamente nula, optou-se pelo modelo de um fator, mais simples e com mais
-graus de liberdade residuais.
+graus de liberdade residuais. [REVER - APAGAR]
 
 ### Hipóteses
 
@@ -161,10 +160,10 @@ comparação das variâncias (volatilidade) pelo teste de Fligner-Killeen e
 comparação, pois as duas ações são observadas nos mesmos 35 meses. Embora
 esse procedimento tenha sido definido antes da análise, as ações comparadas
 são escolhidas por terem as maiores médias amostrais, de modo que a
-diferença observada entre elas tende a estar superestimada; os resultados
+diferença observada entre elas tende a estar superestimada. Os resultados
 dessa etapa são, por isso, tratados como evidência complementar, e não
 como prova de superioridade. O teste $t$ pareado é bilateral, uma vez que a
-direção da diferença entre as duas ações não foi fixada *a priori*.
+direção da diferença entre as duas ações não foi fixada a priori.
 
 O nível de significância adotado é $\alpha = 0.05$ em todas as etapas, e a
 potência desejada é $1 - \beta = 0.8$.
@@ -696,7 +695,7 @@ supõe. Os números usados na discussão são os da potência exata do
 procedimento efetivamente aplicado aos dados; a expressão analítica é
 registrada aqui para comparação com o dimensionamento da aula.
 
-### Conclusões e Recomendações
+## Conclusões e Recomendações
 
 - Ao nível $\alpha = 0.05$, há forte evidência de que os retornos médios das
   cinco ações diferem ($p < 0.001$). As ações **`r melhor`** e
@@ -745,11 +744,11 @@ registrada aqui para comparação com o dimensionamento da aula.
   da mesma ordem da diferença entre as duas melhores ações; (v) validar a
   recomendação fora da amostra, por exemplo escolhendo a ação com os meses
   $1, \dots, t$ e verificando seu retorno no mês $t+1$, o que testa
-  diretamente a pergunta sobre o *próximo* mês; (vi) caso uma série mais
+  diretamente a pergunta sobre o próximo mês; (vi) caso uma série mais
   longa revele correlação entre as ações num mesmo mês, tratar o mês como
   bloco para remover essa fonte de variabilidade.
 
-### Referências
+## Referências
 
 [1] Montgomery DC, Runger GC. Applied Statistics and Probability for
 Engineers. 5th ed. Hoboken: John Wiley & Sons; 2010.
@@ -785,13 +784,13 @@ University Press; 2010.
 Costs. Rev Financ Stud. 2016;29(1):104-147.
 https://doi.org/10.1093/rfs/hhv063
 
-### Papéis da equipe
+## Papéis da equipe
 
 - Amanda Bomfim Moitinho: Verificadora
 - David Felipe Brochero Giraldo: Relator
 - Henrique Marques Cruz: Relator
 
-### Declaração sobre o uso de IA generativa e tecnologias assistidas por IA
+## Declaração sobre o uso de IA generativa e tecnologias assistidas por IA
 
 Durante a preparação deste trabalho, os autores utilizaram o assistente de
 IA Claude (Anthropic) para apoiar a estruturação do código de análise
