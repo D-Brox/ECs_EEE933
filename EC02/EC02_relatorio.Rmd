@@ -179,7 +179,7 @@ com base apenas em informações externas aos dados analisados.
 Na escala dos retornos, adotou-se $\delta^* = 0.5$ ponto percentual ao mês
 ($\approx 6.2\%$ ao ano em regime composto). O valor é compatível com a ordem
 de grandeza dos custos de execução estimados para estratégias de negociação
-em ações, de 20 a 57 pontos-base [11]: diferenças de retorno menores que
+em ações, de 20 a 57 pontos-base [11 - CONFERIR]: diferenças de retorno menores que
 $\delta^*$ tenderiam a ser consumidas por custos de transação e impostos,
 desconsiderados nas simplificações do problema. Esse valor é utilizado como
 margem do teste de equivalência.
