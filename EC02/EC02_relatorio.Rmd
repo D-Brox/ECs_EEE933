@@ -588,7 +588,7 @@ magnitudes semelhantes.
 
 **(i) Variabilidade (critério adotado).** A `r rec` apresentou o menor
 desvio-padrão amostral (`r round(sd(x), 2)` p.p. para a `r b` e
-`r round(sd(y), 2)` p.p. para a `r s`; Tabela 4), mas o teste de
+`r round(sd(y), 2)` p.p. para a `r s`), mas o teste de
 Fligner-Killeen não rejeita a igualdade das variâncias
 ($p = `r round(fk$p.value, 3)`$). Não se pode afirmar, portanto, que uma
 das ações tenha menor variabilidade populacional. Dessa forma, a escolha da `r rec`
@@ -596,7 +596,7 @@ decorre do critério de desempate definido de menor
 desvio-padrão amostral, e não de uma diferença de risco demonstrada.
 
 **(ii) Meses com retorno positivo (critério alternativo).** Ambas `r b` e
-`r s` tiveram retorno positivo em `r pos[1]` e `r pos[2]` dos `r n` meses. O critério alternativo, portanto, não distingue as duas ações. Ao menos, os dois critérios não entram em conflito, já que o alternativo não aponta para nenhuma das ações.
+`r s` tiveram retorno positivo em `r pos[1]` dos `r n` meses. O critério alternativo, portanto, não distingue as duas ações. Consequentemente, não há divergência nas decisões, dado que o critério alternativo se mostra neutro para o desempate.
 
 ### Potência do teste
 
@@ -611,7 +611,7 @@ normalizada) [@mathews2010]:
 
 1. ANOVA, no cenário conservador em que apenas duas ações diferem por
    $d^*$, $\tau = \{-d^*/2, d^*/2, 0, 0, 0\}$;
-2. comparação de duas médias independentes com correção de Bonferroni
+2. Comparação de duas médias independentes com correção de Bonferroni
    ($\alpha/K$, $K = 10$), aproximação conservadora para planejamento, e
    não cálculo exato da potência do procedimento de Tukey.
 
