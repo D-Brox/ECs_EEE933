@@ -496,7 +496,7 @@ knitr::kable(cor(ret), digits = 2,
              caption = "Correlação entre os retornos mensais das ações")
 ```
 
-As correlações são baixas (em módulo, no máximo r round(max(abs(cor(ret)[upper.tri(cor(ret))])), 2)), o que indica pouca associação linear entre os retornos das ações em um mesmo mês nesta amostra. Embora correlações baixas não garantam independência, os resultados não fornecem evidência de uma forte dependência linear entre as ações que, por si só, inviabilize a aplicação da ANOVA e do teste de Tukey.
+As correlações são baixas (em módulo, no máximo `r round(max(abs(cor(ret)[upper.tri(cor(ret))])), 2)`), o que indica pouca associação linear entre os retornos das ações em um mesmo mês nesta amostra. Embora correlações baixas não garantam independência, os resultados não fornecem evidência de uma forte dependência linear entre as ações que, por si só, inviabilize a aplicação da ANOVA e do teste de Tukey.
 
 No fim, como foi dito que são ações de empresas diferentes, pôde-se assumir independência e a análise de correlações não contradiz isso.
 
