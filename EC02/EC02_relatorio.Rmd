@@ -367,8 +367,8 @@ knitr::kable(resumo, digits = 3, row.names = FALSE,
 As médias mensais variam de `r round(min(resumo$Media), 2)`% a
 `r round(max(resumo$Media), 2)`%. Os intervalos de confiança de 95% de A1 e
 A3 estão inteiramente acima de zero, o de A2 está inteiramente abaixo de
-zero, e os de A4 e A5 contêm zero. Essas estatísticas são descritivas; as
-comparações entre ações são feitas na Análise Estatística.
+zero, e os de A4 e A5 contêm o zero. Essa etapa apresenta apenas um panorama descritivo, ficando as
+comparações entre ações reservadas para a Análise Estatística.
 
 A Figura 1 mostra a evolução dos preços normalizados pelo primeiro mês da
 série, e a Figura 2, a distribuição dos retornos mensais por ação.
