@@ -76,6 +76,10 @@ separá-las com segurança.
 
 ## Introdução
 
+O mercado de ações constitui uma alternativa de investimento caracterizada pela possibilidade de obtenção de retornos superiores, mas também pela exposição a oscilações de preços e a riscos associados ao mercado. Nesse contexto, faz-se necessária uma análise de longo prazo da dinâmica entre lucro e retorno para apoiar decisões de um investimento [1]. 
+
+A análise de séries históricas de preços permite transformar as cotações observadas em medidas de retorno, possibilitando a identificação de padrões de desempenho ao longo de determinado período. Entre essas medidas, o retorno mensal simples fornece uma representação direta da variação percentual do preço de fechamento entre dois meses consecutivos.
+
 Este estudo de caso avalia cinco ações da bolsa de valores a partir dos preços
 de fechamento dos últimos 36 meses. O investidor considerado dispõe de um
 montante fixo e pretende aplicá-lo integralmente em uma única ação, de modo que
@@ -114,16 +118,16 @@ $$R_{ij} = \mu + \tau_i + \epsilon_{ij}, \qquad
 \begin{cases} i = 1, \dots, 5\\ j = 1, \dots, 35 \end{cases}, \qquad
 \epsilon_{ij} \overset{\text{i.i.d.}}{\sim} \mathcal{N}(0, \sigma^2),$$
 
-em que $\mu$ é a média global e $\tau_i$ é o efeito da ação $i$ [2]. O modelo de
+em que $\mu$ é a média global e $\tau_i$ é o efeito da ação $i$ [3]. O modelo de
 efeitos fixos é apropriado porque as cinco ações foram escolhidas pelo
 investidor, e as conclusões valem apenas para elas.
 
-Como os cinco retornos de um mesmo mês são observados sob as mesmas
-condições de mercado, uma alternativa seria tratar o mês como bloco, de modo
-análogo ao pareamento na comparação de duas amostras. O pareamento, porém, é indicado em casos onde há uma grande correlação entre as observações de um mesmo
-bloco. Essa correlação foi avaliada na Análise Exploratória e, por ser
-praticamente nula, optou-se pelo modelo de um fator, mais simples e com mais
-graus de liberdade residuais. [REVER - APAGAR]
+<!-- Como os cinco retornos de um mesmo mês são observados sob as mesmas -->
+<!-- condições de mercado, uma alternativa seria tratar o mês como bloco, de modo -->
+<!-- análogo ao pareamento na comparação de duas amostras. O pareamento, porém, é indicado em casos onde há uma grande correlação entre as observações de um mesmo -->
+<!-- bloco. Essa correlação foi avaliada na Análise Exploratória e, por ser -->
+<!-- praticamente nula, optou-se pelo modelo de um fator, mais simples e com mais -->
+<!-- graus de liberdade residuais. [REVER - APAGAR] -->
 
 ### Hipóteses
 
@@ -137,7 +141,7 @@ $$\begin{cases} H_0: \tau_i = 0, \ \forall i \in \{1, \dots, 5\}\\ H_1: \exists\
 **Etapa 2 (comparações múltiplas):** caso $H_0$ seja rejeitada, é preciso
 identificar quais ações diferem. Como não há uma ação de referência
 definida a priori (nenhuma das cinco é um "controle"), foram planejadas
-comparações de todos contra todos pelo método de Tukey [2, 6], com
+comparações de todos contra todos pelo método de Tukey [3, 7], com
 $K = a(a-1)/2 = 10$ pares:
 
 $$\begin{cases} H_0: \mu_i = \mu_k\\ H_1: \mu_i \neq \mu_k\end{cases}
@@ -146,7 +150,7 @@ $$\begin{cases} H_0: \mu_i = \mu_k\\ H_1: \mu_i \neq \mu_k\end{cases}
 O método de Dunnett seria apropriado se uma ação de referência tivesse sido
 definida antes da coleta. Como não há uma ação-controle definida a priori,
 escolhê-la após observar as médias caracterizaria uma hipótese formulada
-*post hoc* [5]. O método de Tukey permite comparar todos os pares mantendo
+*post hoc* [6]. O método de Tukey permite comparar todos os pares mantendo
 o nível global de significância. As ações que não diferirem
 significativamente da ação de maior média amostral formam o grupo de
 candidatas ao maior retorno.
@@ -154,7 +158,7 @@ candidatas ao maior retorno.
 **Evidências complementares:** se mais de uma ação se destacar, conforme
 solicitado no enunciado, as duas primeiras colocadas serão comparadas
 diretamente por (i) teste $t$ pareado das diferenças mensais, (ii) teste de
-equivalência por dois testes unilaterais (TOST) com margem $\delta^*$ [4], (iii)
+equivalência por dois testes unilaterais (TOST) com margem $\delta^*$ [5], (iii)
 comparação das variâncias (volatilidade) pelo teste de Fligner-Killeen e
 (iv) frequência de meses com retorno negativo. O pareamento é natural nessa
 comparação, pois as duas ações são observadas nos mesmos 35 meses. Embora
@@ -179,7 +183,7 @@ com base apenas em informações externas aos dados analisados.
 Na escala dos retornos, adotou-se $\delta^* = 0.5$ ponto percentual ao mês
 ($\approx 6.2\%$ ao ano em regime composto). O valor é compatível com a ordem
 de grandeza dos custos de execução estimados para estratégias de negociação
-em ações, de 20 a 57 pontos-base [11 - CONFERIR]: diferenças de retorno menores que
+em ações, de 20 a 57 pontos-base [12]: diferenças de retorno menores que
 $\delta^*$ tenderiam a ser consumidas por custos de transação e impostos,
 desconsiderados nas simplificações do problema. Esse valor é utilizado como
 margem do teste de equivalência.
@@ -189,7 +193,7 @@ dos retornos obtida independentemente dos dados analisados (por exemplo, de
 um estudo piloto ou de dados históricos), que não está disponível. Adotou-se,
 por isso, o tamanho de efeito mínimo relevante normalizado,
 $d^* = \delta^*/\sigma = 0.5$, que corresponde ao efeito de magnitude "média"
-da convenção de Cohen [9, 10]. Nessa formulação, a potência depende apenas de
+da convenção de Cohen [10, 11]. Nessa formulação, a potência depende apenas de
 $d^*$, $n$ e $\alpha$, e não de uma estimativa de $\sigma$. Ressalva-se que as
 convenções de Cohen são genéricas e não específicas para retornos
 financeiros, de modo que ambos os valores devem ser entendidos como
@@ -308,20 +312,20 @@ A3 o intervalo está inteiramente acima de zero, o intervalo de A2 está
 inteiramente abaixo, e os de A4 e A5 contêm zero, de modo que a média destes
 dois últimos não se distingue de um retorno mensal nulo.
 
-A Tabela 2 apresenta a correlação entre os retornos mensais das ações, que
-indica se o pareamento por mês seria vantajoso.
+<!-- A Tabela 2 apresenta a correlação entre os retornos mensais das ações, que -->
+<!-- indica se o pareamento por mês seria vantajoso. -->
 
-```{r correlacao, echo=TRUE}
-knitr::kable(cor(ret), digits = 2,
-             caption = "Correlação entre os retornos mensais das ações")
-```
+<!-- ```{r correlacao, echo=TRUE} -->
+<!-- knitr::kable(cor(ret), digits = 2, -->
+<!--              caption = "Correlação entre os retornos mensais das ações") -->
+<!-- ``` -->
 
-As correlações são baixas (em módulo, no máximo
-`r round(max(abs(cor(ret)[upper.tri(cor(ret))])), 2)`), ou seja, as ações
-não respondem de forma comum a um "efeito de mercado" mensal. O mês,
-portanto, não é uma fonte relevante de variabilidade compartilhada, e
-tratá-lo como bloco não reduziria a variância residual. Isso justifica o uso
-do modelo de um fator definido no Desenho experimental.
+<!-- As correlações são baixas (em módulo, no máximo -->
+<!-- `r round(max(abs(cor(ret)[upper.tri(cor(ret))])), 2)`), ou seja, as ações -->
+<!-- não respondem de forma comum a um "efeito de mercado" mensal. O mês, -->
+<!-- portanto, não é uma fonte relevante de variabilidade compartilhada, e -->
+<!-- tratá-lo como bloco não reduziria a variância residual. Isso justifica o uso -->
+<!-- do modelo de um fator definido no Desenho experimental. -->
 
 ## Análise Estatística
 
@@ -330,7 +334,7 @@ do modelo de um fator definido no Desenho experimental.
 O modelo da ANOVA pressupõe resíduos (1) independentes, (2) com variância
 homogênea entre as ações e (3) normalmente distribuídos. Embora a ANOVA seja
 relativamente robusta a violações moderadas de normalidade e de
-homocedasticidade quando o delineamento é balanceado [2], como neste caso (35
+homocedasticidade quando o delineamento é balanceado [3], como neste caso (35
 observações por ação), essas premissas foram verificadas. O modelo de efeitos
 fixos foi ajustado aos dados para permitir a inspeção dos resíduos:
 
@@ -366,9 +370,9 @@ balanceado torna a ANOVA robusta a diferenças dessa magnitude. A premissa é
 consistente com os dados e justifica o uso de uma variância comum
 $\sigma^2$, estimada pelo $QM_{Res}$, na ANOVA e nas comparações de Tukey.
 
-**Independência.** É a premissa mais delicada, pois os dados são séries
+**Independência.** É uma premissa bem delicada, pois os dados são séries
 temporais, e retornos de meses consecutivos poderiam estar correlacionados
-(por exemplo, por tendências de mercado). O teste de Durbin-Watson [7] depende
+(por exemplo, por tendências de mercado). O teste de Durbin-Watson [8] depende
 da ordenação das observações, e por isso foi aplicado a cada série de
 retornos em ordem cronológica, que é o fator suspeito de introduzir
 dependência.
@@ -383,17 +387,17 @@ knitr::kable(dw, digits = 3,
              caption = "Teste de Durbin-Watson para cada série de retornos")
 ```
 
+```{r correlacao, echo=TRUE}
+knitr::kable(cor(ret), digits = 2,
+             caption = "Correlação entre os retornos mensais das ações")
+```
 Nenhuma série apresenta autocorrelação de primeira ordem significativa (todos
 os $p$-valores acima de 0.05), e as estatísticas DW estão próximas de 2,
 valor esperado na ausência de autocorrelação. A dependência entre ações num
-mesmo mês também é desprezível, como mostrado na Tabela 2. Não há, portanto,
+mesmo mês também é desprezível, como mostrado na Tabela 3. Não há, portanto,
 evidência de violação da independência.
 
-Resta uma premissa mais forte e não verificável com estes dados: a de que o
-comportamento dos retornos é estável no tempo, isto é, de que a média dos
-últimos 35 meses representa o retorno esperado para o próximo mês. Os testes
-comparam médias *históricas*, e a recomendação para o mês seguinte depende
-dessa hipótese.
+Resta a premissa, não verificável com estes dados, de que o comportamento dos retornos é estável no tempo e que a média dos últimos 35 meses representa o retorno esperado para o próximo mês. Os testes comparam médias históricas, de modo que a recomendação para o mês seguinte depende dessa hipótese.
 
 ### Etapa 1: ANOVA
 
@@ -459,7 +463,7 @@ IC muito próximo de zero), o que não afeta a decisão.
 Como duas ações se destacaram, elas foram comparadas diretamente. Por serem
 observadas nos mesmos meses, a comparação foi feita com as diferenças
 pareadas $D_j = R_{`r melhor`,j} - R_{`r segunda`,j}$, pelo teste $t$
-pareado [1].
+pareado [2].
 
 ```{r pareado, echo=TRUE}
 x <- ret[, melhor]; y <- ret[, segunda]; d <- x - y
@@ -527,7 +531,7 @@ superior não rejeita sua hipótese nula ($p = `r round(p_sup, 3)`$). De forma
 equivalente, o IC de 90% ($[`r round(ic90[1], 2)`; `r round(ic90[2], 2)`]$)
 não está contido em $[-\delta^*; \delta^*]$. Portanto, os dados sustentam
 não-inferioridade de `r melhor` em relação a `r segunda` para a margem de
-0.5 p.p., mas *não sustentam equivalência* entre as duas ações. Esse
+0.5 p.p., mas não sustentam equivalência entre as duas ações. Esse
 resultado precisa ser lido junto com a potência do TOST, calculada acima: com
 `r n` meses, a probabilidade de declarar equivalência seria de apenas
 `r round(100 * pot_tost_zero, 1)`\% mesmo que a diferença verdadeira fosse nula,
@@ -544,8 +548,9 @@ vantagem dentro dessa margem.
 a volatilidade também é relevante para a decisão. O teste de
 Fligner-Killeen não indica diferença entre as variâncias das duas ações
 ($p = `r round(fk$p.value, 3)`$), e as razões média/desvio-padrão são muito
-próximas (Tabela 4). O teste ignora o pareamento, o que é aceitável aqui dada
-a correlação praticamente nula entre as duas séries (Tabela 2).
+próximas (Tabela 4). 
+<!-- O teste ignora o pareamento, o que é aceitável aqui dada -->
+<!-- a correlação praticamente nula entre as duas séries (Tabela 2). -->
 
 **(iv) Meses com perda.** As duas ações tiveram retorno negativo em apenas
 `r sum(x < 0)` e `r sum(y < 0)` dos `r n` meses, respectivamente, de modo que
@@ -557,7 +562,7 @@ A potência foi calculada *a priori* para o efeito normalizado $d^*$ definido
 no Desenho experimental, e não a partir do efeito observado ou de uma
 estimativa de $\sigma$ obtida dos mesmos dados, pois a avaliação *a
 posteriori* da probabilidade do erro tipo II é uma abordagem inadequada
-[1, 8]. Na escala normalizada, os cálculos são feitos com desvio-padrão
+[2, 9]. Na escala normalizada, os cálculos são feitos com desvio-padrão
 unitário e diferença igual a $d^*$.
 
 Foram realizados três cálculos [3]. O primeiro refere-se à ANOVA,
@@ -750,37 +755,39 @@ registrada aqui para comparação com o dimensionamento da aula.
 
 ## Referências
 
-[1] Montgomery DC, Runger GC. Applied Statistics and Probability for
+[1] Pimentel RC. Lucros inesperados, retorno das ações e risco no mercado de capitais brasileiro. Revista Contabilidade & Finanças. 2015;26(69):290-303.
+
+[2] Montgomery DC, Runger GC. Applied Statistics and Probability for
 Engineers. 5th ed. Hoboken: John Wiley & Sons; 2010.
 
-[2] Montgomery DC. Design and Analysis of Experiments. 6th ed. Hoboken: John
+[3] Montgomery DC. Design and Analysis of Experiments. 6th ed. Hoboken: John
 Wiley & Sons; 2005.
 
-[3] Mathews P. Sample Size Calculations: Practical Methods for Engineers and
+[4] Mathews P. Sample Size Calculations: Practical Methods for Engineers and
 Scientists. Fairport Harbor: MMB; 2010.
 
-[4] Walker E, Nowacki AS. Understanding Equivalence and Noninferiority
+[5] Walker E, Nowacki AS. Understanding Equivalence and Noninferiority
 Testing. J Gen Intern Med. 2011;26(2):192-196.
 
-[5] Kerr NL. HARKing: Hypothesizing After the Results are Known. Pers Soc
+[6] Kerr NL. HARKing: Hypothesizing After the Results are Known. Pers Soc
 Psychol Rev. 1998;2(3):196-217.
 
-[6] Hothorn T, Bretz F, Westfall P. Simultaneous Inference in General
+[7] Hothorn T, Bretz F, Westfall P. Simultaneous Inference in General
 Parametric Models. Biom J. 2008;50(3):346-363.
 
-[7] Campelo F. Lecture Notes on Design and Analysis of Experiments. Version
+[8] Campelo F. Lecture Notes on Design and Analysis of Experiments. Version
 2.12; 2018. Disponível em: http://git.io/v3Kh8.
 
-[8] Hoenig JM, Heisey DM. The Abuse of Power: The Pervasive Fallacy of
+[9] Hoenig JM, Heisey DM. The Abuse of Power: The Pervasive Fallacy of
 Power Calculations for Data Analysis. Am Stat. 2001;55(1):19-24.
 
-[9] Cohen J. Statistical Power Analysis for the Behavioral Sciences. 2nd ed.
+[10] Cohen J. Statistical Power Analysis for the Behavioral Sciences. 2nd ed.
 Hillsdale: Lawrence Erlbaum Associates; 1988.
 
-[10] Ellis PD. The Essential Guide to Effect Sizes. Cambridge: Cambridge
+[11] Ellis PD. The Essential Guide to Effect Sizes. Cambridge: Cambridge
 University Press; 2010.
 
-[11] Novy-Marx R, Velikov M. A Taxonomy of Anomalies and Their Trading
+[12] Novy-Marx R, Velikov M. A Taxonomy of Anomalies and Their Trading
 Costs. Rev Financ Stud. 2016;29(1):104-147.
 https://doi.org/10.1093/rfs/hhv063
 
