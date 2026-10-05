@@ -552,7 +552,7 @@ de três a cinco vezes $\delta^*$; essas diferenças são, portanto, tanto
 estatisticamente significativas quanto relevantes do ponto de vista
 prático, e as três ações são descartadas como candidatas. Entre as demais, apenas a diferença A4 $-$ A2 é significativa, o que não altera a decisão.
 
-As ações `r b` e `r s` formam, assim, o grupo de candidatas ao maior retorno médio. A não rejeição da igualdade entre elas não é evidência de que sejam iguais, mas indica que o procedimento de Tukey não detectou diferença entre as duas. A diferença estimada é de $`r round(dif_bs[1], 2)`$ p.p. ao mês a favor da `r b` (IC simultâneo de 95%: $[`r round(dif_bs[2], 2)`; `r round(dif_bs[3], 2)`]$; $p$ ajustado $= `r round(p_bs, 3)`). Assim, elas são consideradas empatadas, e o critério de desempate é aplicado a seguir.
+As ações `r b` e `r s` formam, assim, o grupo de candidatas ao maior retorno médio. A não rejeição da igualdade entre elas não é evidência de que sejam iguais, mas indica que o procedimento de Tukey não detectou diferença entre as duas. A diferença estimada é de $`r round(dif_bs[1], 2)`$ p.p. ao mês a favor da `r b` (IC simultâneo de 95%: $[`r round(dif_bs[2], 2)`; `r round(dif_bs[3], 2)`]$; $p$ ajustado $= `r round(p_bs, 3)`$). Assim, elas são consideradas empatadas, e o critério de desempate é aplicado a seguir.
 
 ### Critérios de desempate entre `r b` e `r s`
 
