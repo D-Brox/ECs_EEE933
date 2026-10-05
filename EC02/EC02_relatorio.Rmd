@@ -385,15 +385,15 @@ ggplot(dfP, aes(x = Mes, y = Preco, colour = Acao)) +
 ```
 
 Na Figura 1, A1 e A3 apresentam trajetória predominantemente ascendente e
-terminam o período
+terminam o período aproximadamente
 `r round(100 * (P[n + 1, "A1"] / P[1, "A1"] - 1))`% e
-`r round(100 * (P[n + 1, "A3"] / P[1, "A3"] - 1))`% acima do preço inicial.
+`r round(100 * (P[n + 1, "A3"] / P[1, "A3"] - 1))`% acima do preço inicial, respectivamente.
 A2 termina `r abs(round(100 * (P[n + 1, "A2"] / P[1, "A2"] - 1)))`% abaixo
-do preço inicial, e A4 e A5 terminam
+do preço inicial, enquanto A4 e A5 terminam
 `r round(100 * (P[n + 1, "A4"] / P[1, "A4"] - 1))`% e
-`r round(100 * (P[n + 1, "A5"] / P[1, "A5"] - 1))`% acima; para essas
-duas ações, o intervalo de confiança da média mensal contém zero
-(Tabela 1).
+`r round(100 * (P[n + 1, "A5"] / P[1, "A5"] - 1))`% acima. Vale notar que estas são as
+duas ações cujos intervalos de confiança da média mensal contém zero
+(vide Tabela 1).
 
 ```{r boxplot, fig.width=7, fig.height=3.5, fig.cap="Retornos mensais por ação (pontos vermelhos: médias)"}
 ggplot(df, aes(x = Acao, y = Ret, fill = Acao)) +
