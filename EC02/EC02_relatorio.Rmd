@@ -245,7 +245,7 @@ $$R_{ij} = \mu + \tau_i + \epsilon_{ij}, \qquad
 \epsilon_{ij} \overset{\text{i.i.d.}}{\sim} \mathcal{N}(0, \sigma^2),$$
 
 em que $\mu$ é a média global e $\tau_i$ é o efeito da ação $i$
-[@montgomery2005]. 
+[@montgomery2005].
 
 ### Hipóteses
 
@@ -268,7 +268,7 @@ As ações que não diferirem significativamente da ação de maior média
 amostral formam, junto com ela, o grupo de candidatas ao maior retorno
 médio. Se o grupo contiver apenas essa ação, ela é a recomendada.
 
-**Critério para desempate:** caso mais de uma ação seja considerada candidata após a comparação dos retornos médios, o desempate é realizado pela menor variabilidade dos retornos, medida pelo desvio-padrão amostral. 
+**Critério para desempate:** caso mais de uma ação seja considerada candidata após a comparação dos retornos médios, o desempate é realizado pela menor variabilidade dos retornos, medida pelo desvio-padrão amostral.
 
 
 **Evidências complementares:**
@@ -293,7 +293,7 @@ potência desejada é $1 - \beta = 0.8$.
 
 A diferença mínima de retorno mensal que justificaria preferir uma ação a
 outra depende do perfil do investidor, dos custos de transação e dos
-impostos, de modo que não há um valor único aplicável a este problema. 
+impostos, de modo que não há um valor único aplicável a este problema.
 
 Na escala dos retornos, adotou-se $\delta^* = 0.5$ ponto percentual ao mês,
 o que equivale a aproximadamente 6.2% ao ano em regime composto. O valor
@@ -408,7 +408,7 @@ ggplot(df, aes(x = Acao, y = Ret, fill = Acao)) +
 
 Na Figura 2, a posição das distribuições é compatível com a Tabela 1: os
 retornos de A1 e A3 concentram-se acima de zero, e os das demais, em torno
-de zero ou abaixo dele. As dispersões são da mesma ordem de grandeza, com 
+de zero ou abaixo dele. As dispersões são da mesma ordem de grandeza, com
 desvios-padrão entre `r round(min(resumo$DP), 2)` e `r round(max(resumo$DP), 2)` p.p.. Pelo critério de 1.5 vezes a amplitude interquartil, há `r sum(sapply(colnames(ret), function(a) length(boxplot.stats(ret[, a])$out)))` observações além dos limites dos boxplots, no total das cinco ações.
 
 
@@ -422,7 +422,7 @@ distribuídos. Com delineamento balanceado, como neste caso, a ANOVA é
 relativamente robusta a violações moderadas de normalidade e de
 homocedasticidade [@montgomery2005]. Nos testes utilizados (Shapiro-Wilk,
 Fligner-Killeen e Durbin-Watson), a hipótese nula corresponde à premissa
-satisfeita; a não rejeição indica, portanto, apenas que não houve evidência 
+satisfeita; a não rejeição indica, portanto, apenas que não houve evidência
 suficiente para a reijeição, não que ela esteja comprovada. Por isso, os
 testes foram combinados com a análise gráfica dos resíduos.
 
@@ -516,7 +516,7 @@ diferem, essa questão é tratada pelas comparações múltiplas.
 
 ### Etapa 2: comparações múltiplas de Tukey
 
-Após a ANOVA indicar diferença significativa entre as médias, aplica-se o teste de Tukey para realizar comparações par a par entre as cinco ações, controlando o erro do conjunto de comparações. São calculados intervalos de confiança simultâneos de 95% para cada diferença entre médias. 
+Após a ANOVA indicar diferença significativa entre as médias, aplica-se o teste de Tukey para realizar comparações par a par entre as cinco ações, controlando o erro do conjunto de comparações. São calculados intervalos de confiança simultâneos de 95% para cada diferença entre médias.
 
 ```{r tukey, fig.width=7, fig.height=3.8, fig.cap="Intervalos de confiança simultâneos de 95% (Tukey) para as diferenças entre médias"}
 set.seed(2026)  # quantis e p-valores de Tukey são obtidos numericamente
@@ -556,7 +556,7 @@ As ações `r b` e `r s` formam, assim, o grupo de candidatas ao maior retorno m
 
 ### Critérios de desempate entre `r b` e `r s`
 
-A variabilidade é comparada pelo teste de Fligner-Killeen, enquanto a frequência é obtida pela contagem dos meses com retorno positivo. 
+A variabilidade é comparada pelo teste de Fligner-Killeen, enquanto a frequência é obtida pela contagem dos meses com retorno positivo.
 
 ```{r desempate}
 # (i) Variabilidade: teste de Fligner-Killeen entre as duas ações
@@ -564,6 +564,11 @@ fk <- fligner.test(list(x, y)); fk
 
 # (ii) Critério alternativo: meses com retorno positivo
 pos <- c(sum(x > 0), sum(y > 0)); names(pos) <- c(b, s); pos
+
+# Incerteza da comparação entre os desvios-padrão: IC da razão de variâncias
+iv <- var(x) / var(y)
+q  <- qf(0.975, n - 1, n - 1)
+round(c(razao = iv, inferior = iv / q, superior = iv * q), 3)
 ```
 
 A saída apresenta o teste de Fligner-Killeen entre as duas ações e o
@@ -587,10 +592,15 @@ Na Tabela 4, as duas ações apresentam médias e desvios-padrão de
 magnitudes semelhantes.
 
 **(i) Variabilidade (critério adotado).** A `r rec` apresentou o menor
-desvio-padrão amostral (`r round(sd(x), 2)` p.p. para a `r b` e
-`r round(sd(y), 2)` p.p. para a `r s`), mas o teste de
+desvio-padrão amostral (`r sprintf("%.2f", sd(x))` p.p. para a `r b` e
+`r sprintf("%.2f", sd(y))` p.p. para a `r s`), mas o teste de
 Fligner-Killeen não rejeita a igualdade das variâncias
-($p = `r round(fk$p.value, 3)`$). Não se pode afirmar, portanto, que uma
+($p = `r round(fk$p.value, 3)`$). A imprecisão dessa comparação pode ser
+quantificada pela razão entre as variâncias estimadas, que é de
+$`r round(iv, 2)`$ (IC 95\%: $[`r round(iv / q, 2)`;
+`r round(iv * q, 2)`]$): os dados são compatíveis com uma variância da
+`r b` de `r round(iv / q, 1)` a `r round(iv * q, 1)` vezes a variância da
+`r s`. Não se pode afirmar, portanto, que uma
 das ações tenha menor variabilidade populacional. Dessa forma, a escolha da `r rec`
 decorre do critério de desempate definido de menor
 desvio-padrão amostral, e não de uma diferença de risco demonstrada.
@@ -663,10 +673,10 @@ lidas como referências de planejamento.
   significativamente, aplica-se o critério de desempate definido na
   Introdução para o investidor de perfil conservador, e **recomenda-se a
   `r rec`**, de menor desvio-padrão amostral
-  (`r round(min(sd(x), sd(y)), 2)` p.p., contra
-  `r round(max(sd(x), sd(y)), 2)` p.p.). A recomendação decorre da regra de
+  (`r sprintf("%.2f", min(sd(x), sd(y)))` p.p., contra
+  `r sprintf("%.2f", max(sd(x), sd(y)))` p.p.). A recomendação decorre da regra de
   decisão adotada e da estimativa amostral, e não de uma demonstração
-  estatística de menor risco. 
+  estatística de menor risco.
   - **Critério alternativo:** a frequência de meses com retorno positivo
   (`r pos[1]` e `r pos[2]` dos `r n` meses para a `r b` e a `r s`) não distingue as duas ações.
 - **Contribuição da análise estatística:** uma escolha baseada apenas nas
