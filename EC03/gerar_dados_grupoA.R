@@ -23,8 +23,16 @@ potencia <- 0.80      # potência mínima desejada para d = d_star
 semente  <- 20261011  # semente base: garante a reprodutibilidade da coleta
 
 n_reps <- 50
-dims <- seq(5, 140, by = 15)
-n_inst <- length(dims)
+
+# N de instâncias pela potência: teste t pareado, d* = 0.5 -> 33.37 -> 34.
+# As 34 dimensões formam uma grade uniformemente espaçada em [2, 150],
+# arredondada para inteiros (amostragem sistemática que cobre o intervalo
+# de forma uniforme).
+n_req <- power.t.test(power = potencia, delta = d_star, sd = 1,
+                      sig.level = alfa, alternative = "two.sided",
+                      type = "paired")$n
+n_inst <- ceiling(n_req)
+dims <- round(seq(2, 150, length.out = n_inst))
 
 # -----------------------------------------------------------------------------
 # Função objetivo
@@ -57,7 +65,7 @@ args <- commandArgs(trailingOnly = TRUE)
 if (length(args) != 2L || args[[1]] != "--instancia") {
   stop("Uso: Rscript gerar_dados_grupoA.R --instancia <k>, com k entre 1 e ",
        n_inst,
-       "\nPara coletar as 10 instâncias em paralelo e mesclar os resultados,",
+       "\nPara coletar as instâncias em paralelo e mesclar os resultados,",
        "\nuse ./coletar_dados_grupoA.sh.")
 }
 k <- as.integer(args[[2]])

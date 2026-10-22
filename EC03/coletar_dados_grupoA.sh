@@ -3,39 +3,41 @@ set -u
 
 cd "$(dirname "$0")"
 
-n_inst=10   # número de instâncias; acompanha dims <- seq(5, 140, by = 15)
+n_inst=34   # número de instâncias; acompanha gerar_dados_grupoA.R (power.t.test)
+nucl=${NUCLEOS:-$(( $(nproc) - 2 ))}   # limite de processos simultâneos
 
 mkdir -p coleta_instancias
 inicio=$(date +%s)
 
-echo "Coletando $n_inst instâncias em paralelo (um log por instância em coleta_instancias/)..."
+echo "Coletando $n_inst instâncias com até $nucl processos simultâneos..."
 
-pids=()
+# Fila via xargs: no máximo `nucl` instâncias rodam ao mesmo tempo. Cada uma
+# tem log próprio; o status individual é conferido pelos arquivos gravados.
+printf '%s\n' $(seq 1 "$n_inst") | xargs -P "$nucl" -I{} sh -c '
+  log=$(printf "coleta_instancias/inst_%02d.log" "$1")
+  Rscript gerar_dados_grupoA.R --instancia "$1" > "$log" 2>&1
+' _ {}
+
+# Estado de cada instância (última linha do log).
 for k in $(seq 1 "$n_inst"); do
   log=$(printf "coleta_instancias/inst_%02d.log" "$k")
-  Rscript gerar_dados_grupoA.R --instancia "$k" > "$log" 2>&1 &
-  pids+=("$!")
+  tail -n 1 "$log" | sed 's/^/  /'
 done
 
-# Espera cada instância terminar, com verificação individual dos códigos de
-# saída para saber exatamente qual falhou (e onde olhar).
-falha=0
-for i in "${!pids[@]}"; do
-  k=$((i + 1))
-  log=$(printf "coleta_instancias/inst_%02d.log" "$k")
-  if wait "${pids[$i]}"; then
-    tail -n 1 "$log"
-  else
-    echo "ERRO: instância $k falhou; ver $log:"
-    tail -n 3 "$log" | sed 's/^/    /'
-    falha=1
+# Falha = par de arquivos faltando ou vazio no final da fila.
+falta=0
+for k in $(seq 1 "$n_inst"); do
+  b=$(printf "coleta_instancias/inst_%02d_bruto.csv" "$k")
+  r=$(printf "coleta_instancias/inst_%02d_resumo.csv" "$k")
+  if [ ! -s "$b" ] || [ ! -s "$r" ]; then
+    echo "ERRO: instância $k não concluiu (ver coleta_instancias/inst_$(printf '%02d' $k).log)"
+    falta=1
   fi
 done
-
-if [ "$falha" -ne 0 ]; then
+if [ "$falta" -ne 0 ]; then
   echo "Coleta encerrada por falhas; os CSV finais não foram atualizados."
-  echo "Resolva a falha e rode o script de novo: as instâncias concluídas"
-  echo "serão dispensadas e só o que falta será coletado."
+  echo "Rode o script de novo: as instâncias concluídas serão dispensadas,"
+  echo "e só o que falta será coletado."
   exit 1
 fi
 
