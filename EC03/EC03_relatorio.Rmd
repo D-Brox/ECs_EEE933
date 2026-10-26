@@ -1,0 +1,713 @@
+---
+title: 'EEE933 - Estudo de Caso 03: Comparação de desempenho de duas configurações de um algoritmo de otimização'
+author: "Amanda Bomfim Moitinho, David Felipe Brochero Giraldo, Henrique Marques Cruz"
+date: "`r format(Sys.Date(), '%d/%m/%Y')`"
+lang: pt-BR
+output:
+  pdf_document:
+    fig_caption: yes
+  html_document:
+    df_print: paged
+link-citations: true
+references:
+- id: storn1997
+  type: article-journal
+  author:
+  - family: Storn
+    given: Rainer
+  - family: Price
+    given: Kenneth
+  title: "Differential Evolution: A Simple and Efficient Heuristic for Global Optimization over Continuous Spaces"
+  container-title: Journal of Global Optimization
+  volume: 11
+  issue: 4
+  page: 341-359
+  issued:
+    year: 1997
+  DOI: 10.1023/A:1008202821328
+- id: campelo2016
+  type: paper-conference
+  author:
+  - family: Campelo
+    given: Felipe
+  - family: Botelho
+    given: Moisés
+  title: Experimental Investigation of Recombination Operators for Differential Evolution
+  container-title: Proceedings of the Genetic and Evolutionary Computation Conference (GECCO 2016)
+  publisher: ACM
+  page: 221-228
+  issued:
+    year: 2016
+  DOI: 10.1145/2908812.2908852
+- id: campelo2019
+  type: article-journal
+  author:
+  - family: Campelo
+    given: Felipe
+  - family: Takahashi
+    given: Fernanda
+  title: Sample Size Estimation for Power and Accuracy in the Experimental Comparison of Algorithms
+  container-title: Journal of Heuristics
+  volume: 25
+  issue: 2
+  page: 305-338
+  issued:
+    year: 2019
+  DOI: 10.1007/s10732-018-9396-7
+- id: wolpert1997
+  type: article-journal
+  author:
+  - family: Wolpert
+    given: David H.
+  - family: Macready
+    given: William G.
+  title: No Free Lunch Theorems for Optimization
+  container-title: IEEE Transactions on Evolutionary Computation
+  volume: 1
+  issue: 1
+  page: 67-82
+  issued:
+    year: 1997
+  DOI: 10.1109/4235.585893
+- id: rosenbrock1960
+  type: article-journal
+  author:
+  - family: Rosenbrock
+    given: H. H.
+  title: An Automatic Method for Finding the Greatest or Least Value of a Function
+  container-title: The Computer Journal
+  volume: 3
+  issue: 3
+  page: 175-184
+  issued:
+    year: 1960
+  DOI: 10.1093/comjnl/3.3.175
+- id: bossek2017
+  type: article-journal
+  author:
+  - family: Bossek
+    given: Jakob
+  title: "smoof: Single- and Multi-Objective Optimization Test Functions"
+  container-title: The R Journal
+  volume: 9
+  issue: 1
+  page: 103-113
+  issued:
+    year: 2017
+  DOI: 10.32614/RJ-2017-004
+- id: montgomery2005
+  type: book
+  author:
+  - family: Montgomery
+    given: Douglas C.
+  title: Design and Analysis of Experiments
+  edition: "6ª"
+  publisher: John Wiley & Sons
+  publisher-place: Hoboken
+  issued:
+    year: 2005
+- id: mathews2010
+  type: book
+  author:
+  - family: Mathews
+    given: Paul
+  title: "Sample Size Calculations: Practical Methods for Engineers and Scientists"
+  publisher: MMB
+  publisher-place: Fairport Harbor
+  issued:
+    year: 2010
+- id: campelo2018
+  type: webpage
+  author:
+  - family: Campelo
+    given: Felipe
+  title: Lecture Notes on Design and Analysis of Experiments
+  version: "2.12"
+  URL: http://git.io/v3Kh8
+  issued:
+    year: 2018
+---
+
+```{r setup, include=FALSE}
+rm(list = ls())
+# Instala os pacotes necessários caso ainda não estejam disponíveis
+pkgs <- c("ggplot2", "car")
+faltando <- pkgs[!pkgs %in% rownames(installed.packages())]
+if (length(faltando) > 0) install.packages(faltando)
+invisible(lapply(pkgs, library, character.only = TRUE))
+knitr::opts_chunk$set(echo = TRUE)
+
+# Formata x como a \times 10^b, para uso em expressões matemáticas
+sci <- function(x, dig = 2) {
+  if (x == 0) return("0")
+  e <- floor(log10(abs(x)))
+  sprintf(paste0("%.", dig, "f \\times 10^{%d}"), x / 10^e, e)
+}
+```
+
+```{r parametros, echo=FALSE}
+# Parâmetros experimentais dados no enunciado
+alfa     <- 0.05   # nível de significância
+d_star   <- 0.5    # mínima diferença de importância prática (padronizada)
+potencia <- 0.80   # potência desejada para d = d*
+
+# Número de instâncias (blocos): teste t pareado bilateral. Como d* já é
+# padronizado (d* = delta*/sigma_D), usa-se sd = 1 e delta = d*.
+plan <- power.t.test(power = potencia, delta = d_star, sd = 1,
+                     sig.level = alfa, alternative = "two.sided",
+                     type = "paired")
+N <- ceiling(plan$n)
+
+# Potência obtida com o número inteiro de instâncias
+pot_N <- power.t.test(n = N, delta = d_star, sd = 1, sig.level = alfa,
+                      type = "paired")$power
+
+# Dimensões: grade uniformemente espaçada em [2, 150], arredondada
+dims <- round(seq(2, 150, length.out = N))
+
+# Repetições de cada configuração por instância
+n_reps <- 50
+```
+
+```{r dados, echo=FALSE}
+bruto <- read.csv("DadosDEGrupoA_bruto.csv")
+
+# Média e variância das repetições de cada configuração em cada instância
+resumo <- aggregate(Fbest ~ instancia + dimensao + configuracao, data = bruto,
+                    FUN = function(x) c(media = mean(x), variancia = var(x),
+                                        n = length(x)))
+resumo <- do.call(data.frame, resumo)
+names(resumo) <- sub("^Fbest\\.", "", names(resumo))
+
+# Conferência dos dados contra o desenho experimental
+stopifnot(length(unique(resumo$instancia)) == N,
+          all(sort(unique(resumo$dimensao)) == dims),
+          all(resumo$n == n_reps))
+
+# Formato largo: uma linha por instância, com a média de cada configuração
+inst <- merge(
+  resumo[resumo$configuracao == "Config1", c("instancia", "dimensao", "media", "variancia")],
+  resumo[resumo$configuracao == "Config2", c("instancia", "dimensao", "media", "variancia")],
+  by = c("instancia", "dimensao"), suffixes = c("1", "2"))
+inst <- inst[order(inst$dimensao), ]
+
+inst$D   <- inst$media1 - inst$media2      # D < 0: Config1 melhor
+inst$Rel <- inst$D / inst$media2           # diferença relativa à Config2
+```
+
+```{r decisao-resumo, echo=FALSE}
+# Cálculo antecipado do teste, apenas para citá-lo no Resumo; o mesmo
+# cálculo é apresentado e comentado na Análise Estatística.
+tt     <- t.test(inst$D, mu = 0, conf.level = 1 - alfa)
+rej    <- tt$p.value < alfa
+d_obs  <- mean(inst$D) / sd(inst$D)
+melhor <- if (mean(inst$D) < 0) "Config1" else "Config2"
+pior   <- if (mean(inst$D) < 0) "Config2" else "Config1"
+n_venc <- sum(sign(inst$D) == sign(mean(inst$D)))
+.p_sinal <- 2 * pbinom(min(sum(inst$D > 0), sum(inst$D < 0)), N, 0.5)
+```
+
+## Resumo
+
+Este estudo compara o desempenho médio de duas configurações do algoritmo
+de evolução diferencial (DE), que diferem nos operadores de mutação e de
+recombinação, na classe de funções de Rosenbrock de dimensão entre 2 e 150.
+Foram utilizadas `r N` instâncias da classe, quantidade calculada para potência
+de `r 100 * potencia`% na detecção de um efeito padronizado
+$d^* = `r d_star`$ ao nível $\alpha = `r alfa`$, e cada configuração foi
+executada `r n_reps` vezes em cada instância. Tratando as instâncias como 
+blocos, as configurações foram comparadas pelo teste *t* pareado sobre as
+diferenças entre as médias do melhor valor da função objetivo (Fbest)
+obtidas por elas em cada instância. O teste `r if (rej) "rejeitou" else "não rejeitou"` a
+igualdade de desempenho médio ($p = `r sci(tt$p.value)`$), conclusão
+confirmada pelo teste do sinal ($p = `r sci(.p_sinal)`$), já que o teste
+de Shapiro-Wilk rejeitou a normalidade das diferenças. A `r melhor`
+obteve menor valor médio em `r n_venc` das `r N` instâncias, com diferença
+média estimada de $`r sci(mean(inst$D))`$ na escala da função objetivo
+(IC 95%: $[`r sci(tt$conf.int[1])`; `r sci(tt$conf.int[2])`]$) e efeito
+padronizado $\hat{d} = `r round(d_obs, 2)`$. Recomenda-se, portanto, a `r melhor` para a classe de problemas avaliada.
+
+## Introdução
+
+Muitos problemas de engenharia podem ser formulados como a busca do mínimo
+(ou máximo) de uma função objetivo, frequentemente não convexa, de muitas
+variáveis e sem solução analítica. Para esses problemas, algoritmos
+baseados em populações, como a evolução diferencial (DE) [@storn1997], são
+uma alternativa comum: um conjunto de soluções candidatas é repetidamente
+submetido a operadores de mutação, recombinação e seleção, explorando o
+espaço de busca. O desempenho do DE, contudo, depende fortemente da
+configuração adotada, isto é, de quais operadores de mutação e de
+recombinação são utilizados e de seus parâmetros [@campelo2016].
+
+A escolha da configuração não pode ser feita de forma universal: não existe
+algoritmo de otimização superior a todos os demais em todos os problemas
+possíveis [@wolpert1997], de modo que a comparação só faz sentido para uma
+classe de problemas de interesse. Além disso, o DE é estocástico, e seu
+resultado varia entre execuções na mesma instância e entre instâncias de
+uma mesma classe. Comparar configurações com base em poucas execuções ou em
+uma única instância pode, portanto, levar a conclusões que refletem apenas
+essa variabilidade. Para que a recomendação de uma configuração seja
+confiável, a comparação deve ser planejada como um experimento, com número
+de instâncias e de repetições definido antes da coleta e com controle das
+probabilidades de erro dos tipos I e II [@campelo2019].
+
+Neste trabalho, são comparadas duas configurações do DE, previamente
+ajustadas, na classe de funções de Rosenbrock [@rosenbrock1960;
+@bossek2017] de dimensão entre 2 e 150. A Config1 combina mutação *rand*
+($F = 4$) e recombinação aritmética; a Config2 combina mutação *best*
+($F = 3$) e recombinação binomial ($CR = 0.7$). A função de Rosenbrock
+possui um único mínimo global, de valor zero, situado no fundo de um vale
+estreito e curvo, o que dificulta a convergência de métodos de busca. O
+desempenho de cada configuração é medido pelo melhor valor da função
+objetivo ao final da execução, e quanto menor esse valor, melhor a
+configuração. Busca-se responder às seguintes perguntas:
+
+1. Há diferença no desempenho médio do algoritmo com as duas
+   configurações, para a classe de problemas de interesse?
+2. Caso haja, qual configuração apresenta melhor desempenho médio, e qual é
+   a magnitude da diferença?
+3. Alguma configuração deve ser recomendada em relação à outra?
+
+Para isso, as instâncias são tratadas como blocos, de modo que as duas
+configurações são avaliadas nas mesmas instâncias e a variabilidade entre
+instâncias é removida da comparação. O número de instâncias é calculado
+para atingir a potência desejada, as dimensões são distribuídas ao longo do
+intervalo de interesse, e as configurações são comparadas pelo teste *t*
+pareado, com estimativa da magnitude da diferença por intervalo de
+confiança. Caso a premissa de normalidade das diferenças não seja atendida,
+a conclusão é verificada por um teste não paramétrico, o teste do sinal.
+
+## Desenho experimental
+
+### Descrição do problema
+
+Seja $Y_{ijk}$ o melhor valor da função objetivo obtido pela configuração
+$i \in \{1, 2\}$ na $k$-ésima execução ($k = 1, \dots, r$) sobre a
+instância $j$ ($j = 1, \dots, N$). Como a função de Rosenbrock é definida
+sobre variáveis adimensionais, $Y_{ijk}$ e as diferenças $D_j$ também são
+adimensionais. O desempenho da configuração $i$ na
+instância $j$ é resumido pela média das $r$ execuções,
+$\bar{Y}_{ij} = \frac{1}{r}\sum_{k=1}^{r} Y_{ijk}$, e a variável de
+resposta da comparação é a diferença
+
+$$D_j = \bar{Y}_{1j} - \bar{Y}_{2j}, \qquad j = 1, \dots, N.$$
+
+Valores negativos de $D_j$ indicam melhor desempenho da Config1. Cada
+instância é um bloco, e as médias por instância seguem o modelo aditivo
+
+$$\bar{Y}_{ij} = \mu + \tau_i + \beta_j + \epsilon_{ij},$$
+
+em que $\mu$ é a média global, $\tau_i$ é o efeito da configuração $i$,
+$\beta_j$ é o efeito da instância $j$ e $\epsilon_{ij}$ é o resíduo. Na
+diferença entre as configurações, o efeito da instância se cancela:
+
+$$D_j = (\tau_1 - \tau_2) + (\epsilon_{1j} - \epsilon_{2j})
+= \mu_D + \epsilon_j, \qquad
+\epsilon_j \overset{\text{i.i.d.}}{\sim} \mathcal{N}(0, \sigma_D^2),$$
+
+em que $\mu_D$ é a diferença média de desempenho na classe de problemas
+[@campelo2018].
+
+### Hipóteses
+
+$$\begin{cases} H_0: \mu_D = 0\\ H_1: \mu_D \neq 0\end{cases}$$
+
+O nível de significância adotado é $\alpha = `r alfa`$, e a potência
+desejada para $d = d^*$ é $1 - \beta = `r potencia`$.
+
+### Tamanho de efeito mínimo relevante
+
+O enunciado fixa a mínima diferença de importância prática em unidades do
+desvio-padrão das diferenças, $d^* = \delta^*/\sigma_D = `r d_star`$. Como
+não há estimativa prévia de $\sigma_D$, o efeito é especificado na escala
+padronizada, e o valor de $\delta^*$ na escala de $Y$ fica implicitamente
+definido pela variabilidade das diferenças.
+
+### Cálculo do tamanho amostral
+
+**Número de instâncias.** O número de blocos foi calculado para o teste
+*t* pareado bilateral, com $d^* = `r d_star`$, $\alpha = `r alfa`$ e
+potência de `r potencia` [@mathews2010]:
+
+```{r parametros-codigo, ref.label="parametros", eval=FALSE}
+```
+
+```{r mostra-N}
+plan
+dims
+```
+
+Assim, são necessárias $N = `r N`$ instâncias
+($n = `r round(plan$n, 2)`$, arredondado para cima). Com isso, a potência do teste
+para $d = d^*$ é de `r round(100 * pot_N, 1)`%, o que atende ao requisito do enunciado.
+
+As dimensões foram
+distribuídas em uma grade uniformemente espaçada no intervalo $[2, 150]$,
+arredondada para inteiros. Essa amostragem sistemática garante que toda a
+faixa de dimensões da classe seja coberta com a mesma densidade.
+
+**Repetições por instância.** O número de instâncias e o número de
+repetições por instância são determinados de forma independente
+[@campelo2019]. O teste é feito sobre as médias por instância, de modo que
+o número de repetições $r$ não altera os graus de liberdade do teste, mas 
+determina o erro-padrão da estimativa $D_j$ em cada instância. Supondo execuções independentes e as condições do Teorema Central do Limite, esse erro-padrão é
+
+$$se_j = \sqrt{\frac{s_{1j}^2}{r} + \frac{s_{2j}^2}{r}},$$
+
+em que $s_{ij}^2$ é a variância amostral das $r$ execuções da configuração
+$i$ na instância $j$. A variância total das diferenças é a soma da
+variância entre instâncias, que não pode ser controlada, com essa parcela
+devida à aleatoriedade das execuções. Para que o ruído de cada execução
+não reduza a potência planejada, @campelo2019 recomendam que
+$se_j^2 \leq 0.1\,\sigma_D^2$ em cada instância.
+
+@campelo2019 propõem determinar o número de execuções de cada
+configuração iterativamente em cada instância, aumentando-o até que
+$se_j$ fique abaixo de um limiar $se^*$; para classes com instâncias de
+escalas muito diferentes, como a deste estudo, os autores recomendam
+aplicar o procedimento à diferença percentual entre as médias. Os mesmos
+autores admitem o uso parcial da metodologia, por exemplo com um número
+predefinido de repetições. Neste estudo, adotou-se um número fixo de
+$r = `r n_reps`$ repetições por configuração em todas as instâncias,
+superior ao tamanho amostral inicial recomendado por esses autores para
+distribuições fortemente assimétricas (20 a 30 execuções), uma vez que a
+forma da distribuição de $Y$ não era conhecida antes da coleta. Como esse
+valor não decorre do procedimento iterativo, o atendimento do critério
+$se_j^2 \leq 0.1\,\sigma_D^2$ é verificado a posteriori na Análise
+Estatística.
+
+### Descrição da coleta dos dados
+
+O arquivo `DadosDEGrupoA_bruto.csv` contém uma linha por execução
+(`r nrow(bruto)` linhas, com as colunas `dimensao`, `instancia`,
+`repeticao`, `configuracao` e `Fbest`).
+
+Esses dados foram gerados com os pacotes `ExpDE` e `smoof`, com os parâmetros
+fixados no enunciado. Cada execução utiliza uma semente própria, definida
+a partir de uma semente base, do índice da instância, da repetição e da
+configuração, o que torna a coleta reprodutível. Por demandar muito tempo,
+esta foi executada fora do relatório. O bloco abaixo reproduz o núcleo da coleta
+de uma instância e não é executado na compilação.
+
+```{r coleta, eval=FALSE}
+suppressPackageStartupMessages({library(ExpDE); library(smoof)})
+
+semente <- 20261011
+
+recpars <- list(Config1 = list(name = "recombination_arith"),
+                Config2 = list(name = "recombination_bin", cr = 0.7))
+mutpars <- list(Config1 = list(name = "mutation_rand", f = 4),
+                Config2 = list(name = "mutation_best", f = 3))
+configs <- names(mutpars)
+
+coleta_instancia <- function(k) {
+  d  <- dims[k]
+  f  <- smoof::makeRosenbrockFunction(dimensions = d)
+  # O ExpDE localiza a função objetivo pelo nome, no ambiente global
+  fn <<- function(X) {
+    if (!is.matrix(X)) X <- matrix(X, nrow = 1)
+    apply(X, MARGIN = 1, FUN = f)
+  }
+  selpars  <- list(name = "selection_standard")
+  stopcrit <- list(names = "stop_maxeval", maxevals = 5000 * d,
+                   maxiter = 100 * d)
+  probpars <- list(name = "fn", xmin = rep(-5, d), xmax = rep(10, d))
+
+  obs <- matrix(NA_real_, n_reps, length(configs),
+                dimnames = list(NULL, configs))
+  for (r in seq_len(n_reps)) {
+    for (cfg in seq_along(configs)) {
+      set.seed(semente + 100000L * k + 100L * r + cfg)
+      obs[r, cfg] <- ExpDE(mutpars = mutpars[[cfg]], recpars = recpars[[cfg]],
+                           popsize = 5 * d, selpars = selpars,
+                           stopcrit = stopcrit, probpars = probpars,
+                           showpars = list(show.iters = "none"))$Fbest
+    }
+  }
+  data.frame(dimensao = d, instancia = k,
+             repeticao = rep(seq_len(n_reps), times = length(configs)),
+             configuracao = rep(configs, each = n_reps),
+             Fbest = as.vector(obs))
+}
+
+bruto <- do.call(rbind, lapply(seq_len(N), coleta_instancia))
+write.csv(bruto, "DadosDEGrupoA_bruto.csv", row.names = FALSE)
+```
+
+## Análise Exploratória
+
+Os dados foram carregados e organizados conforme descrito no Desenho
+experimental:
+
+```{r dados-codigo, ref.label="dados", eval=FALSE}
+```
+
+O código lê o arquivo de dados, calcula a média e a variância amostral das
+`r n_reps` repetições de cada configuração em cada instância, confere o
+número de instâncias, as dimensões e o número de repetições contra o
+desenho, e organiza as médias por
+instância no *data frame* `inst`, com a diferença $D_j$ (`D`) e a diferença
+relativa à Config2, $D_j / \bar{Y}_{2j}$ (`Rel`).
+
+```{r sumario}
+v   <- list(inst$media1, inst$media2, inst$D)
+fmt <- function(x) formatC(x, format = "e", digits = 2)
+tab <- data.frame(
+  Variavel = c("Config1", "Config2", "D"),
+  Media    = fmt(sapply(v, mean)),
+  DP       = fmt(sapply(v, sd)),
+  Mediana  = fmt(sapply(v, median)),
+  Min      = fmt(sapply(v, min)),
+  Max      = fmt(sapply(v, max)))
+knitr::kable(tab, row.names = FALSE, align = "lrrrrr",
+             caption = paste("Estatísticas descritivas, sobre as instâncias,",
+                             "das médias do melhor valor por configuração",
+                             "e das diferenças D = Config1 - Config2"))
+```
+
+A Tabela 1 mostra que os valores obtidos pela Config2 são, em média,
+cerca de `r round(mean(inst$media2) / mean(inst$media1))` vezes maiores
+que os da Config1. A Config1 obteve o menor valor médio em
+`r sum(inst$D < 0)` das `r N` instâncias. Na instância de dimensão 2, a
+Config1 atingiu o mínimo global em todas as `r n_reps` execuções.
+
+
+```{r fig-dim, fig.width=7, fig.height=3.5, warning=FALSE, fig.cap="Média do melhor valor da função objetivo por instância, em função da dimensão (eixo vertical em escala logarítmica; o valor nulo da Config1 na dimensão 2 não é representável e foi omitido)"}
+long <- data.frame(dimensao = rep(inst$dimensao, 2),
+                   Config   = rep(c("Config1", "Config2"), each = N),
+                   media    = c(inst$media1, inst$media2))
+ggplot(long[long$media > 0, ], aes(x = dimensao, y = media, colour = Config)) +
+  geom_point() + geom_line(alpha = 0.5) +
+  scale_y_log10() +
+  labs(x = "Dimensão", y = "Média do melhor valor", colour = NULL) +
+  theme_minimal()
+```
+
+```{r fig-D, fig.width=7, fig.height=3.5, fig.cap="Diferença D (Config1 - Config2) por instância, em função da dimensão (linha tracejada: diferença nula)"}
+ggplot(inst, aes(x = dimensao, y = D)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  labs(x = "Dimensão", y = "D") +
+  theme_minimal()
+```
+
+Na Figura 1, as duas configurações pioram com o aumento da dimensão, mas
+a Config1 permanece abaixo da Config2 em toda a faixa. Na Figura 2, a
+diferença $D_j$ é negativa em todas as instâncias e cresce em módulo com a
+dimensão. A diferença relativa, por outro lado, 
+é praticamente constante:
+a redução do valor médio obtida pela Config1 em relação à Config2 variou
+entre `r sprintf("%.2f", -100 * max(inst$Rel))`% e
+`r sprintf("%.2f", -100 * min(inst$Rel))`% nas `r N` instâncias.
+
+## Análise Estatística
+
+### Validação das premissas do modelo
+
+O teste *t* pareado pressupõe que as diferenças $D_j$ sejam independentes
+e aproximadamente normais. No teste de Shapiro-Wilk, a hipótese nula corresponde à premissa satisfeita; por isso, o teste foi combinado com a análise gráfica.
+
+```{r normalidade, fig.width=4.5, fig.height=3.5, fig.cap="Gráfico quantil-quantil das diferenças D"}
+par(mar = c(4, 4, 1, 1))
+qqPlot(inst$D, pch = 16, las = 1, id = FALSE,
+       xlab = "Quantis da Normal", ylab = "D")
+sw <- shapiro.test(inst$D); sw
+```
+
+**Normalidade.** O teste de Shapiro-Wilk
+`r if (sw$p.value < alfa) "rejeita" else "não rejeita"` a normalidade das
+diferenças ($p = `r round(sw$p.value, 3)`$). No gráfico quantil-quantil
+(Figura 3), os pontos centrais acompanham a reta, e o afastamento ocorre
+nos extremos: nas duas caudas, os valores observados são menos extremos
+que os esperados sob a distribuição normal, e, na cauda superior, eles se
+acumulam próximos de zero, valores correspondentes às instâncias de menor
+dimensão (Figura 2). Trata-se, portanto, de um desvio da normalidade nas
+caudas, sem assimetria acentuada.
+
+Nessa situação, o teste *t* é robusto à violação da normalidade, desde que
+os dados sejam balanceados [@montgomery2005], o que ocorre neste
+delineamento: as duas configurações foram avaliadas nas mesmas `r N`
+instâncias, com `r n_reps` execuções cada, resultando em exatamente uma
+diferença por instância. Ainda assim, a conclusão do teste *t* é
+verificada adiante pelo teste do sinal, que não depende da distribuição
+das diferenças.
+
+**Independência.** Cada instância corresponde a uma dimensão distinta, e
+cada execução usa uma semente própria, de modo que não há ordenação
+temporal nem compartilhamento de execuções entre instâncias. A premissa é,
+portanto, sustentada pelo procedimento de coleta.
+
+**Precisão das estimativas por instância.** O critério
+$se_j^2 \leq 0.1\,\sigma_D^2$ [@campelo2019] foi verificado em cada
+instância, com $\sigma_D^2$ estimada pela variância amostral das
+diferenças.
+
+```{r var-rep}
+se2_j <- (inst$variancia1 + inst$variancia2) / n_reps
+razao_se <- se2_j / var(inst$D)
+c(var_D = var(inst$D), max_se2 = max(se2_j),
+  max_razao = max(razao_se), media_razao = mean(razao_se))
+```
+
+A razão $se_j^2/\hat{\sigma}_D^2$ é no máximo
+`r sprintf("%.4f", max(razao_se))` (média de
+`r sprintf("%.4f", mean(razao_se))`), muito abaixo do limite de 0.1.
+
+Vale ressaltar que a expressão de $se_j$ supõe que a distribuição 
+amostral das médias de cada configuração em cada instância seja 
+aproximadamente normal [@campelo2019]. Pelo Teorema Central do Limite, com $r = `r n_reps`$
+execuções, ela é razoável mesmo para distribuições assimétricas de $Y$,
+acima do mínimo de 20 a 30 execuções sugerido pelos autores nesses casos.
+
+Apenas por rigor, como algumas instâncias apresentam assimetria acentuada, 
+$se_j$ também foi
+estimado por bootstrap não paramétrico, procedimento proposto pelos mesmos
+autores para os casos em que essa suposição não pode ser garantida: em
+cada instância, as execuções de cada configuração foram reamostradas com
+reposição $R = 999$ vezes, e $se_j$ foi estimado pelo desvio-padrão das
+diferenças entre as médias reamostradas.
+
+```{r se-boot}
+set.seed(2026)  # reamostragem bootstrap
+R <- 999
+se_boot <- sapply(inst$instancia, function(k) {
+  x1 <- bruto$Fbest[bruto$instancia == k & bruto$configuracao == "Config1"]
+  x2 <- bruto$Fbest[bruto$instancia == k & bruto$configuracao == "Config2"]
+  sd(replicate(R, mean(sample(x1, replace = TRUE)) -
+                  mean(sample(x2, replace = TRUE))))
+})
+c(min_razao_boot_form = min(se_boot / sqrt(se2_j)),
+  max_razao_boot_form = max(se_boot / sqrt(se2_j)),
+  max_razao_criterio  = max(se_boot^2) / var(inst$D))
+```
+
+As estimativas por bootstrap ficaram entre
+`r sprintf("%.2f", min(se_boot / sqrt(se2_j)))` e
+`r sprintf("%.2f", max(se_boot / sqrt(se2_j)))` vezes as obtidas pela
+expressão analítica, e a razão $se_j^2/\hat{\sigma}_D^2$ calculada com
+elas é no máximo `r sprintf("%.4f", max(se_boot^2) / var(inst$D))`. O
+critério é, portanto, atendido com ou sem a suposição de normalidade das
+médias: a variância das diferenças reflete quase exclusivamente a
+variação do efeito entre instâncias, e o número de repetições adotado é
+suficiente para que o ruído de cada execução não afete a potência do
+teste.
+
+### Teste *t* pareado
+
+```{r teste}
+tt
+round(c(media_D = mean(inst$D), IC_inf = tt$conf.int[1],
+        IC_sup = tt$conf.int[2], d_obs = d_obs), 3)
+```
+
+A hipótese nula de igualdade de desempenho médio
+`r if (rej) "é rejeitada" else "não é rejeitada"`
+($t = `r round(tt$statistic, 2)`$, $`r tt$parameter`$ graus de liberdade,
+$p = `r sci(tt$p.value)`$). A diferença média estimada é
+$\bar{D} = `r sci(mean(inst$D))`$ (IC 95%:
+$[`r sci(tt$conf.int[1])`; `r sci(tt$conf.int[2])`]$), favorável à
+`r melhor`. Em unidades do desvio-padrão das diferenças, o efeito estimado
+é $\hat{d} = `r round(d_obs, 2)`$, de módulo
+`r if (abs(d_obs) >= d_star) "superior" else "inferior"` a
+$d^* = `r d_star`$, o que indica uma diferença
+`r if (abs(d_obs) >= d_star) "também relevante do ponto de vista prático" else "inferior à mínima diferença de importância prática"`.
+
+Como a magnitude de $\bar{D}$ é dominada pelas instâncias de maior
+dimensão (Figura 2), ela deve ser lida em conjunto com a diferença
+relativa, que mostra que a vantagem da `r melhor` não se restringe a essas
+instâncias: o valor médio obtido pela `r melhor` foi de
+`r sprintf("%.2f", 100 * (1 + min(inst$Rel)))`% a
+`r sprintf("%.2f", 100 * (1 + max(inst$Rel)))`% do obtido pela `r pior` em
+cada instância.
+
+### Verificação pelo teste do sinal
+
+Embora a rejeição da normalidade das diferenças se deva a desvios nas
+caudas, situação em que o teste *t* é robusto para dados balanceados, a
+conclusão também foi verificada pelo teste do sinal, que exige apenas
+observações independentes de uma distribuição contínua. O teste avalia a
+mediana $\theta_D$ das diferenças:
+
+$$\begin{cases} H_0: \theta_D = 0\\ H_1: \theta_D \neq 0\end{cases}$$
+
+Sob $H_0$, o número de diferenças positivas $r^+$ segue uma distribuição
+binomial $B(N, 0.5)$, e o p-valor bilateral é obtido a partir dela. Importante pontuar que o teste do sinal é menos sensível que o teste *t*: sua eficiência relativa
+assintótica em relação ao teste *t* é de 0.637, de modo que seriam
+necessárias cerca de $N/0.637 = `r ceiling(N / 0.637)`$ instâncias para a
+mesma potência [@campelo2019]. Assim, com $N = `r N`$, ele é usado aqui apenas
+como verificação da conclusão do teste *t*, e não como teste principal.
+
+```{r sinal}
+r_mais <- sum(inst$D > 0)
+p_sinal <- 2 * pbinom(min(r_mais, N - r_mais), N, 0.5)
+c(r_mais = r_mais, N = N, p_valor = p_sinal)
+```
+
+Nenhuma das `r N` diferenças é positiva, e o teste do sinal
+rejeita a hipótese de mediana
+nula ($p = `r sci(p_sinal)`$), coincidindo portanto com a conclusão do teste *t*.
+
+
+## Conclusões e Recomendações
+
+- Ao nível $\alpha = `r alfa`$, rejeita-se a hipótese de que as
+  duas configurações tenham o mesmo desempenho médio na classe de funções
+  de Rosenbrock com dimensão entre 2 e 150 ($p = `r sci(tt$p.value)`$).
+- A `r melhor` apresentou o melhor desempenho médio. A diferença média
+  estimada é de $`r sci(mean(inst$D))`$ (IC 95%:
+  $[`r sci(tt$conf.int[1])`; `r sci(tt$conf.int[2])`]$), com efeito
+  padronizado $\hat{d} = `r round(d_obs, 2)`$. A vantagem é consistente ao
+  longo da classe: a `r melhor` foi melhor em `r n_venc` das `r N`
+  instâncias, com valores médios inferiores a
+  `r sprintf("%.1f", 100 * (1 + max(inst$Rel)))`% dos obtidos pela `r pior`
+  em cada uma delas.
+- **Recomendação:** recomenda-se a `r melhor`, cuja vantagem é
+  estatisticamente significativa, de magnitude superior à mínima diferença
+  de importância prática e observada em toda a faixa de dimensões
+  avaliada.
+- **Limitações:**
+  (i) as conclusões valem apenas para a classe de funções e o orçamento
+  computacional definidos (função de Rosenbrock com dimensão entre 2 e 150
+  e $5000 \times d$ avaliações da função objetivo por execução, em que
+  $d$ é a dimensão da instância), e não se estendem a funções com outras
+  características nem a orçamentos diferentes;
+  (ii) as configurações foram comparadas com valores fixos de parâmetros,
+  previamente ajustados, de modo que o resultado se refere a essas
+  configurações específicas, e não aos operadores de mutação e de
+  recombinação em geral;
+  (iii) o desempenho foi medido apenas pelo melhor valor da função
+  objetivo ao final da execução, sem considerar a velocidade de
+  convergência ao longo da busca;
+  (iv) como $D_j$ cresce em módulo com a dimensão, a diferença média
+  $\bar{D}$ não descreve a vantagem em uma instância específica, e seu
+  valor depende da faixa de dimensões que define a classe.
+- **Melhorias:**
+  (i) repetir a comparação em outras classes de funções de teste e com
+  outros orçamentos computacionais, para verificar se a vantagem da
+  `r melhor` se mantém;
+  (ii) investigar separadamente o efeito dos operadores de mutação e de
+  recombinação, por meio de um experimento fatorial com esses dois fatores,
+  o que permitiria identificar qual deles é responsável pela diferença
+  observada;
+  (iii) registrar a evolução do melhor valor ao longo das avaliações, de
+  modo a comparar também a velocidade de convergência das configurações;
+  (iv) determinar o número de repetições pelo procedimento iterativo de
+  @campelo2019, o que reduziria o custo computacional da coleta, já que o
+  critério de precisão foi atendido com ampla margem.
+  
+## Referências
+
+::: {#refs}
+:::
+
+## Papéis da equipe
+
+- Amanda Bomfim Moitinho: Verificadora
+- David Felipe Brochero Giraldo: Relator
+- Henrique Marques Cruz: Relator
+
+## Declaração sobre o uso de IA generativa e tecnologias assistidas por IA
+
+Durante a preparação deste trabalho, os autores utilizaram o assistente de
+IA Claude (Anthropic) para auxiliar na estruturação do código de análise estatística em
+R e revisar a análise. Após o uso dessa ferramenta, os autores revisaram e editaram o conteúdo conforme necessário e assumem total responsabilidade pelo conteúdo do relatório.
