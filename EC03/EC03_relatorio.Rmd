@@ -204,7 +204,6 @@ d_obs  <- mean(inst$D) / sd(inst$D)
 melhor <- if (mean(inst$D) < 0) "Config1" else "Config2"
 pior   <- if (mean(inst$D) < 0) "Config2" else "Config1"
 n_venc <- sum(sign(inst$D) == sign(mean(inst$D)))
-.p_sinal <- 2 * pbinom(min(sum(inst$D > 0), sum(inst$D < 0)), N, 0.5)
 ```
 
 ## Resumo
@@ -215,13 +214,13 @@ recombinação, na classe de funções de Rosenbrock de dimensão entre 2 e 150.
 Foram utilizadas `r N` instâncias da classe, quantidade calculada para potência
 de `r 100 * potencia`% na detecção de um efeito padronizado
 $d^* = `r d_star`$ ao nível $\alpha = `r alfa`$, e cada configuração foi
-executada `r n_reps` vezes em cada instância. Tratando as instâncias como 
+executada `r n_reps` vezes em cada instância. Tratando as instâncias como
 blocos, as configurações foram comparadas pelo teste *t* pareado sobre as
 diferenças entre as médias do melhor valor da função objetivo (Fbest)
 obtidas por elas em cada instância. O teste `r if (rej) "rejeitou" else "não rejeitou"` a
 igualdade de desempenho médio ($p = `r sci(tt$p.value)`$), conclusão
-confirmada pelo teste do sinal ($p = `r sci(.p_sinal)`$), já que o teste
-de Shapiro-Wilk rejeitou a normalidade das diferenças. A `r melhor`
+verificada também pelo teste do sinal ($p = `r sci(2 * pbinom(min(sum(inst$D > 0), sum(inst$D < 0)), N, 0.5))`$),
+dado que o teste de Shapiro-Wilk rejeitou a normalidade das diferenças. A `r melhor`
 obteve menor valor médio em `r n_venc` das `r N` instâncias, com diferença
 média estimada de $`r sci(mean(inst$D))`$ na escala da função objetivo
 (IC 95%: $[`r sci(tt$conf.int[1])`; `r sci(tt$conf.int[2])`]$) e efeito
@@ -349,7 +348,7 @@ faixa de dimensões da classe seja coberta com a mesma densidade.
 **Repetições por instância.** O número de instâncias e o número de
 repetições por instância são determinados de forma independente
 [@campelo2019]. O teste é feito sobre as médias por instância, de modo que
-o número de repetições $r$ não altera os graus de liberdade do teste, mas 
+o número de repetições $r$ não altera os graus de liberdade do teste, mas
 determina o erro-padrão da estimativa $D_j$ em cada instância. Supondo execuções independentes e as condições do Teorema Central do Limite, esse erro-padrão é
 
 $$se_j = \sqrt{\frac{s_{1j}^2}{r} + \frac{s_{2j}^2}{r}},$$
@@ -358,8 +357,11 @@ em que $s_{ij}^2$ é a variância amostral das $r$ execuções da configuração
 $i$ na instância $j$. A variância total das diferenças é a soma da
 variância entre instâncias, que não pode ser controlada, com essa parcela
 devida à aleatoriedade das execuções. Para que o ruído de cada execução
-não reduza a potência planejada, @campelo2019 recomendam que
-$se_j^2 \leq 0.1\,\sigma_D^2$ em cada instância.
+não reduza a potência planejada, adotou-se como critério prático,
+inspirado no limiar de acurácia $se^*$ proposto por @campelo2019, que
+$se_j^2 \leq 0.1\,\sigma_D^2$ em cada instância, de modo que a inflação
+da variância das diferenças devida ao ruído das execuções fique abaixo
+de 10%.
 
 @campelo2019 propõem determinar o número de execuções de cada
 configuração iterativamente em cada instância, aumentando-o até que
@@ -386,7 +388,10 @@ Esses dados foram gerados com os pacotes `ExpDE` e `smoof`, com os parâmetros
 fixados no enunciado. Cada execução utiliza uma semente própria, definida
 a partir de uma semente base, do índice da instância, da repetição e da
 configuração, o que torna a coleta reprodutível. Por demandar muito tempo,
-esta foi executada fora do relatório. O bloco abaixo reproduz o núcleo da coleta
+esta foi executada fora do relatório, com os scripts completos disponíveis na
+pasta `coleta/` que acompanha este trabalho (coleta por instância em
+processos paralelos, com retomada das instâncias concluídas e mesclagem
+com verificação de consistência). O bloco abaixo reproduz o núcleo da coleta
 de uma instância e não é executado na compilação.
 
 ```{r coleta, eval=FALSE}
@@ -494,7 +499,7 @@ ggplot(inst, aes(x = dimensao, y = D)) +
 Na Figura 1, as duas configurações pioram com o aumento da dimensão, mas
 a Config1 permanece abaixo da Config2 em toda a faixa. Na Figura 2, a
 diferença $D_j$ é negativa em todas as instâncias e cresce em módulo com a
-dimensão. A diferença relativa, por outro lado, 
+dimensão. A diferença relativa, por outro lado,
 é praticamente constante:
 a redução do valor médio obtida pela Config1 em relação à Config2 variou
 entre `r sprintf("%.2f", -100 * max(inst$Rel))`% e
@@ -538,9 +543,9 @@ temporal nem compartilhamento de execuções entre instâncias. A premissa é,
 portanto, sustentada pelo procedimento de coleta.
 
 **Precisão das estimativas por instância.** O critério
-$se_j^2 \leq 0.1\,\sigma_D^2$ [@campelo2019] foi verificado em cada
-instância, com $\sigma_D^2$ estimada pela variância amostral das
-diferenças.
+$se_j^2 \leq 0.1\,\sigma_D^2$ adotado no Desenho experimental foi
+verificado em cada instância, com $\sigma_D^2$ estimada pela variância
+amostral das diferenças.
 
 ```{r var-rep}
 se2_j <- (inst$variancia1 + inst$variancia2) / n_reps
@@ -553,13 +558,13 @@ A razão $se_j^2/\hat{\sigma}_D^2$ é no máximo
 `r sprintf("%.4f", max(razao_se))` (média de
 `r sprintf("%.4f", mean(razao_se))`), muito abaixo do limite de 0.1.
 
-Vale ressaltar que a expressão de $se_j$ supõe que a distribuição 
-amostral das médias de cada configuração em cada instância seja 
+Vale ressaltar que a expressão de $se_j$ supõe que a distribuição
+amostral das médias de cada configuração em cada instância seja
 aproximadamente normal [@campelo2019]. Pelo Teorema Central do Limite, com $r = `r n_reps`$
 execuções, ela é razoável mesmo para distribuições assimétricas de $Y$,
 acima do mínimo de 20 a 30 execuções sugerido pelos autores nesses casos.
 
-Apenas por rigor, como algumas instâncias apresentam assimetria acentuada, 
+Apenas por rigor, como algumas instâncias apresentam assimetria acentuada,
 $se_j$ também foi
 estimado por bootstrap não paramétrico, procedimento proposto pelos mesmos
 autores para os casos em que essa suposição não pode ser garantida: em
@@ -593,6 +598,9 @@ suficiente para que o ruído de cada execução não afete a potência do
 teste.
 
 ### Teste *t* pareado
+
+O teste e as quantidades citadas no Resumo e nas Conclusões foram calculados
+antecipadamente, pois o Resumo depende de seus resultados:
 
 ```{r teste}
 tt
@@ -631,11 +639,14 @@ mediana $\theta_D$ das diferenças:
 $$\begin{cases} H_0: \theta_D = 0\\ H_1: \theta_D \neq 0\end{cases}$$
 
 Sob $H_0$, o número de diferenças positivas $r^+$ segue uma distribuição
-binomial $B(N, 0.5)$, e o p-valor bilateral é obtido a partir dela. Importante pontuar que o teste do sinal é menos sensível que o teste *t*: sua eficiência relativa
-assintótica em relação ao teste *t* é de 0.637, de modo que seriam
-necessárias cerca de $N/0.637 = `r ceiling(N / 0.637)`$ instâncias para a
-mesma potência [@campelo2019]. Assim, com $N = `r N`$, ele é usado aqui apenas
-como verificação da conclusão do teste *t*, e não como teste principal.
+binomial $B(N, 0.5)$, e o p-valor bilateral é obtido a partir dela.
+Importante pontuar que o teste do sinal é menos sensível que o teste
+*t*: sua eficiência relativa assintótica em relação ao teste *t* é de
+apenas $2/\pi \approx 0.637$, e @campelo2019 observam que ele exige mais
+de 50% de instâncias adicionais para a mesma potência: cerca de
+$N/0.637 = `r ceiling(N / 0.637)`$ em vez de $N = `r N`$. Assim, ele é
+usado aqui apenas como verificação da conclusão do teste *t*, e não como
+teste principal.
 
 ```{r sinal}
 r_mais <- sum(inst$D > 0)
@@ -694,7 +705,7 @@ nula ($p = `r sci(p_sinal)`$), coincidindo portanto com a conclusão do teste *t
   (iv) determinar o número de repetições pelo procedimento iterativo de
   @campelo2019, o que reduziria o custo computacional da coleta, já que o
   critério de precisão foi atendido com ampla margem.
-  
+
 ## Referências
 
 ::: {#refs}
@@ -710,4 +721,5 @@ nula ($p = `r sci(p_sinal)`$), coincidindo portanto com a conclusão do teste *t
 
 Durante a preparação deste trabalho, os autores utilizaram o assistente de
 IA Claude (Anthropic) para auxiliar na estruturação do código de análise estatística em
-R e revisar a análise. Após o uso dessa ferramenta, os autores revisaram e editaram o conteúdo conforme necessário e assumem total responsabilidade pelo conteúdo do relatório.
+R e revisar a análise, e OpenCode com o modelo GLM-5.3-Flash (Z.ai) para a escrita dos scripts de automatização da coleta rápida dos dados
+utilizados neste relatório. Após o uso dessa ferramenta, os autores revisaram e editaram o conteúdo conforme necessário e assumem total responsabilidade pelo conteúdo do relatório.
